@@ -1,0 +1,3113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOOTBALL EMPIRE</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--bg2:#0f1525;--bg3:#151d35;
+  --card:#1a2240;--border:#2a3555;
+  --accent:#00d4ff;--gold:#ffd700;
+  --text:#e8eaf0;--text2:#8892aa;
+  --red:#ff4444;--green:#00cc66;--yellow:#ffcc00;--orange:#ff6b35;
+  --font:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+  --fontH:'Impact','Arial Black','Haettenschweiler',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ===TITLE=== */
+#titleScreen{
+  position:fixed;inset:0;z-index:1000;background:#050810;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px
+}
+.tLogo{
+  font-family:var(--fontH);font-size:clamp(40px,10vw,80px);
+  letter-spacing:8px;color:var(--accent);
+  text-shadow:0 0 60px rgba(0,212,255,.5);
+  animation:glow 2.5s ease-in-out infinite
+}
+@keyframes glow{0%,100%{text-shadow:0 0 40px rgba(0,212,255,.4)}50%{text-shadow:0 0 80px rgba(0,212,255,.8)}}
+.tSub{font-family:var(--fontH);letter-spacing:5px;color:var(--text2);font-size:13px;text-transform:uppercase}
+.tForm{display:flex;flex-direction:column;gap:10px;width:300px;margin-top:10px}
+.tForm label{font-size:11px;letter-spacing:2px;color:var(--text2);text-transform:uppercase}
+.tForm input{
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  padding:11px 14px;font-size:15px;font-family:var(--font);
+  border-radius:4px;outline:none;transition:.2s
+}
+.tForm input:focus{border-color:var(--accent)}
+.tStart{
+  background:var(--accent);color:#000;border:none;
+  padding:13px 44px;font-family:var(--fontH);font-size:17px;
+  letter-spacing:3px;cursor:pointer;border-radius:4px;margin-top:8px;
+  text-transform:uppercase;transition:.2s
+}
+.tStart:hover{background:#fff}
+
+/* ===APP=== */
+#app{display:none;min-height:100vh}
+
+/* TOPBAR */
+#topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,14,26,.97);border-bottom:1px solid var(--border);
+  padding:9px 14px;display:flex;align-items:center;gap:10px;
+  backdrop-filter:blur(8px);flex-wrap:wrap
+}
+.tClub{font-family:var(--fontH);font-size:17px;letter-spacing:2px;color:var(--accent);white-space:nowrap}
+.tChips{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.chip{background:var(--bg3);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--text2)}
+.chip b{color:var(--text)}
+.btnNext{
+  background:var(--orange);border:none;color:#fff;
+  padding:8px 16px;font-family:var(--fontH);font-size:13px;
+  letter-spacing:1px;cursor:pointer;border-radius:4px;transition:.2s;white-space:nowrap
+}
+.btnNext:hover{background:#ff8855}
+
+/* NAV */
+#nav{
+  display:flex;gap:0;background:var(--bg2);
+  border-bottom:1px solid var(--border);overflow-x:auto
+}
+.nBtn{
+  background:none;border:none;color:var(--text2);padding:11px 14px;
+  font-family:var(--font);font-size:12px;cursor:pointer;
+  white-space:nowrap;border-bottom:2px solid transparent;transition:.2s
+}
+.nBtn:hover{color:var(--text)}
+.nBtn.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* CONTENT */
+#content{padding:14px;max-width:1100px;margin:0 auto}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px;margin-bottom:14px}
+.cTitle{
+  font-family:var(--fontH);font-size:15px;letter-spacing:2px;
+  color:var(--accent);margin-bottom:13px;text-transform:uppercase;
+  display:flex;align-items:center;gap:7px
+}
+.cTitle::before{content:'';width:3px;height:15px;background:var(--accent);border-radius:2px;flex-shrink:0}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* STAT BOX */
+.sb{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:11px;text-align:center}
+.sbL{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.sbV{font-family:var(--fontH);font-size:22px}
+.ca{color:var(--accent)}.cg{color:var(--green)}.cr{color:var(--red)}.cy{color:var(--yellow)}.cgo{color:var(--gold)}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--bg3);color:var(--text2);padding:7px 9px;text-align:left;font-weight:500;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid rgba(42,53,85,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.myRow td{background:rgba(0,212,255,.07)}
+.myRow td:first-child{border-left:2px solid var(--accent)}
+
+/* BUTTONS */
+.btn{border:none;padding:6px 13px;cursor:pointer;font-family:var(--font);font-size:12px;border-radius:4px;transition:.2s;white-space:nowrap}
+.bP{background:var(--accent);color:#000;font-weight:700}
+.bP:hover{background:#33dfff}
+.bD{background:var(--red);color:#fff}
+.bD:hover{background:#ff6666}
+.bS{background:var(--green);color:#000;font-weight:700}
+.bS:hover{background:#33ff88}
+.b2{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.b2:hover{border-color:var(--accent);color:var(--accent)}
+.bG{background:var(--gold);color:#000;font-weight:700}
+.bG:hover{background:#ffe44d}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ABILITY */
+.abar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px;display:inline-block;vertical-align:middle}
+.afill{height:100%;border-radius:3px}
+.abadge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:4px;font-family:var(--fontH);font-size:14px;font-weight:700}
+
+/* TAG */
+.tag{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.5px}
+.tGK{background:rgba(255,107,53,.2);color:var(--orange)}
+.tDF{background:rgba(0,212,255,.2);color:var(--accent)}
+.tMF{background:rgba(0,204,102,.2);color:var(--green)}
+.tFW{background:rgba(255,215,0,.2);color:var(--gold)}
+
+/* FORMATION FIELD */
+.field{
+  background:linear-gradient(180deg,#1a4a1a,#1e5c1e 50%,#1a4a1a);
+  border:2px solid #2a6a2a;border-radius:8px;
+  position:relative;overflow:hidden;aspect-ratio:.68;max-height:480px
+}
+.field::before{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(255,255,255,.12) 49.5%,rgba(255,255,255,.12) 50.5%,transparent 50.5%),
+    linear-gradient(0deg,transparent 24.5%,rgba(255,255,255,.08) 24.5%,rgba(255,255,255,.08) 25.5%,transparent 25.5%,transparent 74.5%,rgba(255,255,255,.08) 74.5%,rgba(255,255,255,.08) 75.5%,transparent 75.5%)
+}
+.pspot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;z-index:2}
+.pcirc{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid rgba(255,255,255,.25);transition:.2s}
+.pcirc.filled{background:var(--accent);color:#000}
+.pcirc.empty{background:rgba(255,255,255,.08);color:var(--text2);border-style:dashed}
+.pcirc:hover{transform:scale(1.15)}
+.pname{background:rgba(0,0,0,.7);color:#fff;padding:1px 4px;border-radius:2px;font-size:8px;white-space:nowrap;max-width:55px;overflow:hidden;text-overflow:ellipsis}
+
+/* MORALE BAR */
+.mbar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.mfill{height:100%;border-radius:3px;transition:width .5s}
+
+/* UPGRADE */
+.upg{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:13px}
+.upgLvs{display:flex;gap:3px;margin:8px 0;flex-wrap:wrap}
+.upgPip{width:11px;height:11px;border-radius:2px;background:var(--bg)}
+.upgPip.on-grn{background:var(--green)}
+.upgPip.on{background:var(--accent)}
+
+/* MODAL */
+.mOver{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:14px}
+.mBox{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;width:100%;max-width:580px;max-height:88vh;overflow-y:auto}
+.mTitle{font-family:var(--fontH);font-size:17px;color:var(--accent);margin-bottom:14px;letter-spacing:2px}
+.mClose{float:right;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer}
+.mClose:hover{color:var(--text)}
+
+/* NOTIF */
+.notif{
+  position:fixed;top:68px;right:14px;z-index:999;
+  background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);
+  padding:11px 15px;border-radius:6px;font-size:12px;max-width:280px;pointer-events:none;
+  animation:sIn .3s ease, sOut .3s ease 2.7s forwards
+}
+.notif.ok{border-left-color:var(--green)}
+.notif.ng{border-left-color:var(--red)}
+.notif.sp{border-left-color:var(--gold)}
+@keyframes sIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes sOut{to{transform:translateX(110%);opacity:0}}
+
+/* MISC */
+select{background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:7px 9px;border-radius:4px;font-family:var(--font);font-size:12px;outline:none;cursor:pointer}
+select:focus{border-color:var(--accent)}
+.row{display:flex;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.f12{font-size:12px}.f11{font-size:11px}
+.t2{color:var(--text2)}
+.bold{font-weight:700}
+.mt10{margin-top:10px}.mb10{margin-bottom:10px}
+.rw{color:var(--green)}.rd{color:var(--yellow)}.rl{color:var(--red)}
+.rball{display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;border-radius:50%;font-size:10px;font-weight:700}
+.rball.w{background:var(--green);color:#000}.rball.d{background:var(--yellow);color:#000}.rball.l{background:var(--red);color:#fff}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="titleScreen">
+  <div class="tLogo">FOOTBALL EMPIRE</div>
+  <div class="tSub">Soccer Club Management Simulation</div>
+  <div class="tForm">
+    <label>都道府県</label>
+    <select id="iPref" style="background:var(--card);color:var(--text);border:1px solid var(--border);padding:11px 14px;font-size:15px;border-radius:4px;outline:none">
+    </select>
+    <label>クラブ名</label>
+    <input type="text" id="iClub" placeholder="例：FC 横浜ドリーム" maxlength="20" value="FC ドリーム">
+    <label>監督名</label>
+    <input type="text" id="iMgr" placeholder="例：山田 太郎" maxlength="15" value="山田 太郎">
+  </div>
+  <button class="tStart" id="btnStart">ゲームスタート</button>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <div class="tClub" id="tbClub">-</div>
+    <div class="tChips">
+      <div class="chip">📅 <b id="tbDate">-</b></div>
+      <div class="chip">🏆 <b id="tbLeague">-</b></div>
+      <div class="chip">💰 <b id="tbMoney">-</b></div>
+      <div class="chip">📊 <b id="tbRank">-</b></div>
+    </div>
+    <button class="btnNext" id="btnNext">次週へ進む ▶</button>
+  </div>
+  <div id="nav">
+    <button class="nBtn on" data-tab="dash">ダッシュボード</button>
+    <button class="nBtn" data-tab="squad">選手一覧</button>
+    <button class="nBtn" data-tab="tactics">フォーメーション</button>
+    <button class="nBtn" data-tab="transfer">移籍市場</button>
+    <button class="nBtn" data-tab="league">リーグ</button>
+    <button class="nBtn" data-tab="results">試合結果</button>
+    <button class="nBtn" data-tab="club">クラブ強化</button>
+    <button class="nBtn" data-tab="finance">財務</button>
+  </div>
+  <div id="content"></div>
+</div>
+
+<div id="modal" style="display:none" class="mOver">
+  <div class="mBox" id="mBox"></div>
+</div>
+<div id="nContainer"></div>
+
+<script>
+// =============================================
+// DATA
+// =============================================
+const LEAGUES = [
+  {name:'都道府県4部',  teams:10, rounds:9,  ha:false, baseSal:0,       prize:0,         income:10000,     promo:1, rele:0, po:0},
+  {name:'都道府県3部',  teams:10, rounds:9,  ha:false, baseSal:3000,    prize:0,         income:20000,     promo:1, rele:1, po:0},
+  {name:'都道府県2部',  teams:15, rounds:14, ha:false, baseSal:8000,    prize:0,         income:30000,     promo:1, rele:1, po:0},
+  {name:'都道府県1部',  teams:19, rounds:18, ha:false, baseSal:20000,   prize:0,         income:50000,     promo:1, rele:1, po:0},
+  {name:'地域リーグ2部',teams:10, rounds:18, ha:true,  baseSal:60000,   prize:0,         income:75000,     promo:1, rele:1, po:0},
+  {name:'地域リーグ1部',teams:10, rounds:18, ha:true,  baseSal:120000,  prize:0,         income:100000,    promo:1, rele:1, po:0},
+  {name:'JFL',          teams:15, rounds:28, ha:true,  baseSal:200000,  prize:'jfl',     income:1900000,   promo:2, rele:2, po:1},
+  {name:'J3',           teams:20, rounds:38, ha:true,  baseSal:400000,  prize:'j3',      income:7700000,   promo:2, rele:3, po:1, broadcast:20000000},
+  {name:'J2',           teams:20, rounds:38, ha:true,  baseSal:800000,  prize:'j2',      income:220000000, promo:2, rele:3, po:1, broadcast:100000000},
+  {name:'J1',           teams:20, rounds:38, ha:true,  baseSal:2000000, prize:'j1',      income:0,         promo:0, rele:3, po:0, broadcast:250000000}
+];
+
+const FMTNS = {
+  // ===== 4バック系 =====
+  '4-3-3':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'CM',x:25,y:52},{r:'CM',x:50,y:47},{r:'CM',x:75,y:52},
+    {r:'LW',x:18,y:24},{r:'ST',x:50,y:18},{r:'RW',x:82,y:24}
+  ],
+  '4-3-3(攻)':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'DM',x:50,y:57},{r:'CM',x:30,y:48},{r:'CM',x:70,y:48},
+    {r:'LW',x:18,y:24},{r:'ST',x:50,y:18},{r:'RW',x:82,y:24}
+  ],
+  '4-4-2':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'LM',x:13,y:50},{r:'CM',x:36,y:52},{r:'CM',x:64,y:52},{r:'RM',x:87,y:50},
+    {r:'ST',x:35,y:20},{r:'ST',x:65,y:20}
+  ],
+  '4-4-2(ダイヤ)':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'DM',x:50,y:57},{r:'CM',x:25,y:48},{r:'CM',x:75,y:48},{r:'AM',x:50,y:38},
+    {r:'ST',x:35,y:20},{r:'ST',x:65,y:20}
+  ],
+  '4-5-1':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'LM',x:12,y:50},{r:'CM',x:30,y:52},{r:'CM',x:50,y:46},{r:'CM',x:70,y:52},{r:'RM',x:88,y:50},
+    {r:'ST',x:50,y:20}
+  ],
+  '4-2-3-1':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'DM',x:35,y:58},{r:'DM',x:65,y:58},
+    {r:'LM',x:15,y:43},{r:'AM',x:50,y:40},{r:'RM',x:85,y:43},
+    {r:'ST',x:50,y:20}
+  ],
+  '4-1-4-1':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:15,y:70},{r:'CB',x:35,y:74},{r:'CB',x:65,y:74},{r:'RB',x:85,y:70},
+    {r:'DM',x:50,y:60},
+    {r:'LM',x:12,y:47},{r:'CM',x:33,y:48},{r:'CM',x:67,y:48},{r:'RM',x:88,y:47},
+    {r:'ST',x:50,y:20}
+  ],
+  // ===== 3バック系 =====
+  '3-4-3(フラット)':[
+    {r:'GK',x:50,y:90},
+    {r:'CB',x:28,y:75},{r:'CB',x:50,y:78},{r:'CB',x:72,y:75},
+    {r:'LM',x:12,y:52},{r:'CM',x:35,y:50},{r:'CM',x:65,y:50},{r:'RM',x:88,y:52},
+    {r:'LW',x:18,y:22},{r:'ST',x:50,y:17},{r:'RW',x:82,y:22}
+  ],
+  '3-4-3(ダイヤ)':[
+    {r:'GK',x:50,y:90},
+    {r:'CB',x:28,y:75},{r:'CB',x:50,y:78},{r:'CB',x:72,y:75},
+    {r:'DM',x:50,y:60},{r:'CM',x:25,y:48},{r:'CM',x:75,y:48},{r:'AM',x:50,y:37},
+    {r:'LW',x:18,y:22},{r:'ST',x:50,y:17},{r:'RW',x:82,y:22}
+  ],
+  '3-5-2':[
+    {r:'GK',x:50,y:90},
+    {r:'CB',x:28,y:75},{r:'CB',x:50,y:78},{r:'CB',x:72,y:75},
+    {r:'LM',x:10,y:52},{r:'CM',x:30,y:50},{r:'CM',x:50,y:46},{r:'CM',x:70,y:50},{r:'RM',x:90,y:52},
+    {r:'ST',x:35,y:20},{r:'ST',x:65,y:20}
+  ],
+  '3-4-2-1':[
+    {r:'GK',x:50,y:90},
+    {r:'CB',x:28,y:75},{r:'CB',x:50,y:78},{r:'CB',x:72,y:75},
+    {r:'LM',x:13,y:55},{r:'DM',x:36,y:56},{r:'DM',x:64,y:56},{r:'RM',x:87,y:55},
+    {r:'AM',x:33,y:38},{r:'AM',x:67,y:38},
+    {r:'ST',x:50,y:20}
+  ],
+  '3-1-4-2':[
+    {r:'GK',x:50,y:90},
+    {r:'CB',x:28,y:75},{r:'CB',x:50,y:78},{r:'CB',x:72,y:75},
+    {r:'DM',x:50,y:62},
+    {r:'LM',x:12,y:48},{r:'CM',x:33,y:49},{r:'CM',x:67,y:49},{r:'RM',x:88,y:48},
+    {r:'ST',x:35,y:20},{r:'ST',x:65,y:20}
+  ],
+  // ===== 5バック系 =====
+  '5-4-1':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:8,y:70},{r:'CB',x:26,y:75},{r:'CB',x:50,y:78},{r:'CB',x:74,y:75},{r:'RB',x:92,y:70},
+    {r:'LM',x:12,y:50},{r:'CM',x:36,y:52},{r:'CM',x:64,y:52},{r:'RM',x:88,y:50},
+    {r:'ST',x:50,y:20}
+  ],
+  '5-3-2':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:8,y:70},{r:'CB',x:26,y:75},{r:'CB',x:50,y:78},{r:'CB',x:74,y:75},{r:'RB',x:92,y:70},
+    {r:'CM',x:28,y:50},{r:'CM',x:50,y:46},{r:'CM',x:72,y:50},
+    {r:'ST',x:35,y:20},{r:'ST',x:65,y:20}
+  ],
+  '5-2-1-2':[
+    {r:'GK',x:50,y:90},
+    {r:'LB',x:8,y:70},{r:'CB',x:26,y:75},{r:'CB',x:50,y:78},{r:'CB',x:74,y:75},{r:'RB',x:92,y:70},
+    {r:'DM',x:35,y:57},{r:'DM',x:65,y:57},
+    {r:'AM',x:50,y:42},
+    {r:'ST',x:33,y:20},{r:'ST',x:67,y:20}
+  ]
+};
+
+const GK_ROLES=['GK'];
+const DF_ROLES=['CB','LB','RB'];
+const MF_ROLES=['CM','DM','AM','LM','RM'];
+const FW_ROLES=['ST','LW','RW'];
+
+const LASTNAMES=['田中','鈴木','佐藤','山田','渡辺','伊藤','中村','小林','加藤','吉田','山口','松本','井上','木村','林','齋藤','清水','山崎','池田','橋本','阿部','石川','高橋','森','前田','藤田','岡田','後藤','長谷川','石田'];
+const FIRSTNAMES=['健太','翔','大輝','優斗','颯太','蒼','悠斗','龍聖','航平','陽翔','海斗','結翔','湊','陸斗','悠','大和','蓮','朝陽','凛','奏汰','泰雅','湧太','慶大','怜央','樹'];
+const PREFIXES=['FC','SC','AC','SSC','AFC'];
+
+// 都道府県→地域マッピング
+const PREF_REGION = {
+  '北海道':'北海道',
+  '青森':'東北','岩手':'東北','宮城':'東北','秋田':'東北','山形':'東北','福島':'東北',
+  '茨城':'関東','栃木':'関東','群馬':'関東','埼玉':'関東','千葉':'関東','東京':'関東','神奈川':'関東',
+  '新潟':'北信越','富山':'北信越','石川':'北信越','福井':'北信越','山梨':'北信越','長野':'北信越',
+  '岐阜':'東海','静岡':'東海','愛知':'東海','三重':'東海',
+  '滋賀':'関西','京都':'関西','大阪':'関西','兵庫':'関西','奈良':'関西','和歌山':'関西',
+  '鳥取':'中国','島根':'中国','岡山':'中国','広島':'中国','山口':'中国',
+  '徳島':'四国','香川':'四国','愛媛':'四国','高知':'四国',
+  '福岡':'九州','佐賀':'九州','長崎':'九州','熊本':'九州','大分':'九州','宮崎':'九州','鹿児島':'九州','沖縄':'九州'
+};
+
+// 地域ごとの都市名プール（地域リーグ用）
+const REGION_CITIES = {
+  '北海道':['旭川','函館','札幌','小樽','釧路','帯広','北見','室蘭'],
+  '東北':['仙台','盛岡','青森','秋田','山形','福島','郡山','八戸','弘前'],
+  '関東':['横浜','さいたま','千葉','水戸','宇都宮','前橋','高崎','川越','船橋','相模原'],
+  '北信越':['新潟','長野','金沢','富山','松本','上田','長岡','高岡'],
+  '東海':['名古屋','浜松','静岡','岐阜','豊橋','豊田','岡崎','四日市'],
+  '関西':['大阪','神戸','京都','堺','姫路','奈良','大津','尼崎','西宮'],
+  '中国':['広島','岡山','下関','松江','鳥取','福山','倉敷','山口'],
+  '四国':['高松','松山','高知','徳島','今治','新居浜'],
+  '九州':['福岡','北九州','熊本','鹿児島','大分','宮崎','長崎','佐世保','那覇','久留米']
+};
+
+// 全国主要都市（JFL以上用）
+const NATIONAL_CITIES = [
+  '札幌','仙台','東京','横浜','さいたま','千葉','名古屋','京都','大阪','神戸',
+  '広島','福岡','北九州','熊本','鹿児島','新潟','金沢','静岡','浜松','岡山',
+  '那覇','松山','高松','盛岡','秋田','山形','福島','宇都宮','前橋','水戸'
+];
+
+// 固定クラブ名（JFL・J3・J2・J1）
+const FIXED_CLUBS = {
+  jfl: [
+    '東海モータース FC','北陸精機 SC','西日本電工 FC','関西化学 SC',
+    '町田 フォルザ','松本 グラウルス','金沢 フォルティス','藤枝 ヴェルデ',
+    '奈良 アストラ','鈴鹿 アトレヴィ','高知 マレーア','長野 ノルテ',
+    '宮崎 ソレイユ','八戸 ボレアス','沖縄 ティーダ'
+  ],
+  jflWaiting: [
+    '熊谷 グランデ','松山 フォルサ'
+  ],
+  j3: [
+    '函館 ノルディア','盛岡 ヴェルテ','いわき ルーチェ','福島 スピリッタ',
+    '群馬 ヴァリア','相模原 アルデア','沼津 マレーノ','岐阜 グランツ',
+    '鳥取 ヴァルコ','讃岐 フォゴ','北九州 ヴァロール','宮崎 テゲーラ',
+    '今治 ソーレ','秋田 ノルテ','富山 ヴァリエ','福井 フォルタ',
+    '松江 アルバ','山形 ディオス','青森 ボレアス','岩手 アルパ'
+  ],
+  j2: [
+    '仙台 ルーヴェ','新潟 アルビア','金沢 ツェーゲル','磐田 ヴェントス',
+    '静岡 スルガ','京都 アストレア','岡山 グローリア','徳島 ヴォルタ',
+    '愛媛 フォルテ','長崎 マレア','熊本 ロッソ','栃木 ブレイブ',
+    '水戸 テラ','町田 ゼルヴァ','大宮 アルディア','横浜 リベラ',
+    '東京 ヴェルデ','千葉 グリフォン','大分 モンタナ','福岡 フィアンマ'
+  ],
+  j1: [
+    '浦和 レジェンズ','鹿島 グローリア','川崎 フロンティア','横浜 マリナーズ',
+    'FC 東京ブルー','東京 ヴィクトリア','柏 イーグルス','千葉 ノルテ',
+    '名古屋 グランツ','大阪 ガンバーズ','大阪 セレーノ','神戸 ヴァロール',
+    '広島 ソーレ','鳥栖 フォゴ','札幌 ノルディア','湘南 マレーア',
+    '京都 ルーチェ','福岡 スール','仙台 アストラ','新潟 アルビ'
+  ]
+};
+const PREFECTURES = {
+  '北海道':['札幌','函館','旭川','小樽','釧路','帯広','北見','苫小牧','江別','恵庭'],
+  '青森':['青森','弘前','八戸','三沢','むつ','十和田','黒石','五所川原','つがる','平川'],
+  '岩手':['盛岡','花巻','北上','一関','奥州','釜石','宮古','大船渡','二戸','久慈'],
+  '宮城':['仙台','石巻','塩竈','気仙沼','白石','名取','多賀城','岩沼','登米','栗原'],
+  '秋田':['秋田','横手','大仙','由利本荘','能代','湯沢','大館','鹿角','男鹿','にかほ'],
+  '山形':['山形','鶴岡','酒田','新庄','寒河江','上山','村山','長井','天童','東根'],
+  '福島':['福島','郡山','いわき','会津若松','須賀川','喜多方','相馬','二本松','田村','伊達'],
+  '茨城':['水戸','つくば','日立','土浦','古河','石岡','結城','龍ケ崎','下妻','常総'],
+  '栃木':['宇都宮','足利','栃木','佐野','鹿沼','日光','小山','真岡','大田原','矢板'],
+  '群馬':['前橋','高崎','桐生','伊勢崎','太田','沼田','館林','渋川','藤岡','富岡'],
+  '埼玉':['さいたま','川越','熊谷','川口','行田','秩父','所沢','飯能','加須','春日部'],
+  '千葉':['千葉','市川','船橋','松戸','野田','成田','佐倉','習志野','柏','市原'],
+  '東京':['新宿','渋谷','品川','世田谷','杉並','練馬','板橋','足立','江戸川','葛飾'],
+  '神奈川':['横浜','川崎','相模原','藤沢','茅ヶ崎','平塚','小田原','秦野','厚木','大和'],
+  '新潟':['新潟','長岡','三条','柏崎','新発田','小千谷','加茂','十日町','見附','村上'],
+  '富山':['富山','高岡','魚津','氷見','滑川','黒部','砺波','小矢部','南砺','射水'],
+  '石川':['金沢','七尾','小松','輪島','珠洲','加賀','羽咋','かほく','白山','能美'],
+  '福井':['福井','敦賀','小浜','大野','勝山','鯖江','あわら','越前','坂井','永平寺'],
+  '山梨':['甲府','富士吉田','都留','山梨','大月','韮崎','南アルプス','北杜','甲斐','笛吹'],
+  '長野':['長野','松本','上田','岡谷','飯田','諏訪','須坂','小諸','伊那','駒ヶ根'],
+  '岐阜':['岐阜','大垣','高山','多治見','関','中津川','美濃加茂','土岐','各務原','可児'],
+  '静岡':['静岡','浜松','沼津','熱海','三島','富士宮','伊東','島田','富士','焼津'],
+  '愛知':['名古屋','豊橋','岡崎','一宮','瀬戸','春日井','豊川','津島','碧南','刈谷'],
+  '三重':['津','四日市','伊勢','松阪','桑名','鈴鹿','名張','尾鷲','亀山','鳥羽'],
+  '滋賀':['大津','彦根','長浜','近江八幡','草津','守山','栗東','甲賀','野洲','湖南'],
+  '京都':['京都','福知山','舞鶴','綾部','宇治','宮津','亀岡','城陽','向日','長岡京'],
+  '大阪':['大阪','堺','豊中','吹田','高槻','枚方','八尾','寝屋川','東大阪','茨木'],
+  '兵庫':['神戸','姫路','尼崎','明石','西宮','洲本','芦屋','伊丹','相生','豊岡'],
+  '奈良':['奈良','大和高田','大和郡山','天理','橿原','桜井','五條','御所','生駒','香芝'],
+  '和歌山':['和歌山','海南','橋本','有田','御坊','田辺','新宮','紀の川','岩出','紀美野'],
+  '鳥取':['鳥取','米子','倉吉','境港','岩美','若桜','智頭','八頭','三朝','湯梨浜'],
+  '島根':['松江','浜田','出雲','益田','大田','安来','江津','雲南','奥出雲','飯南'],
+  '岡山':['岡山','倉敷','津山','玉野','笠岡','井原','総社','高梁','新見','備前'],
+  '広島':['広島','福山','呉','竹原','三原','尾道','因島','府中','三次','庄原'],
+  '山口':['山口','下関','宇部','萩','防府','下松','岩国','光','長門','柳井'],
+  '徳島':['徳島','鳴門','小松島','阿南','吉野川','阿波','美馬','三好','勝浦','石井'],
+  '香川':['高松','丸亀','坂出','善通寺','観音寺','さぬき','東かがわ','三豊','小豆島','綾川'],
+  '愛媛':['松山','今治','宇和島','八幡浜','新居浜','西条','大洲','伊予','四国中央','西予'],
+  '高知':['高知','室戸','安芸','南国','土佐','須崎','宿毛','土佐清水','四万十','香南'],
+  '福岡':['福岡','北九州','久留米','直方','飯塚','田川','柳川','八女','筑後','大川'],
+  '佐賀':['佐賀','唐津','鳥栖','多久','伊万里','武雄','鹿島','小城','嬉野','神埼'],
+  '長崎':['長崎','佐世保','島原','諫早','大村','平戸','松浦','対馬','壱岐','五島'],
+  '熊本':['熊本','八代','人吉','荒尾','水俣','玉名','山鹿','菊池','宇土','上天草'],
+  '大分':['大分','別府','中津','日田','佐伯','臼杵','津久見','竹田','豊後高田','杵築'],
+  '宮崎':['宮崎','都城','延岡','日南','小林','日向','串間','西都','えびの','三股'],
+  '鹿児島':['鹿児島','鹿屋','枕崎','阿久根','出水','指宿','西之表','垂水','薩摩川内','日置'],
+  '沖縄':['那覇','宜野湾','石垣','浦添','名護','糸満','沖縄','豊見城','うるま','宮古島']
+};
+
+// =============================================
+// STATE
+// =============================================
+let G = null;
+
+// =============================================
+// INIT
+// =============================================
+function startGame() {
+  const clubName = document.getElementById('iClub').value.trim() || 'FC ドリーム';
+  const mgrName  = document.getElementById('iMgr').value.trim()  || '山田 太郎';
+  const pref     = document.getElementById('iPref').value || '神奈川';
+
+  G = {
+    clubName, mgrName, pref,
+    year:2026, month:6, week:2,
+    funds:500000,
+    leagueIdx:0,
+    season:1,
+    morale:70,
+    formation:'4-4-2',
+    lineup: Array(11).fill(null),
+    bench:  Array(8).fill(null),
+    players:[],
+    freeAgents:[],
+    leagueTable:[],
+    schedule:[],
+    results:[],
+    offers:[],
+    upgrades:{
+      nego:{lv:0,cost:100000},
+      train:{lv:0,cost:100000},
+      sponsor:{lv:0,cost:100000},
+      stadium:{lv:0,cost:50000000}
+    },
+    seasonIncome:0,
+    seasonStats:{w:0,d:0,l:0,gf:0,ga:0},
+    history:[],
+    nextPlayerId:1,
+    releasePending:[],
+    transferList:[],
+    pendingTransfers:[],
+    prevJ1Pos: null,
+    aiPlayers: {},      // teamId -> [player, ...]
+    scoutResults: [],   // 現在のスカウト検索結果
+    scoutOffers: [],    // 送信済みスカウトオファー [{player, fee, result, week}]
+    allLeagueTables: {}, // leagueIdx -> [{name, str, W,D,L,GF,GA,PTS}] 他リーグ順位表
+    allLeagues: {},      // leagueIdx -> [{name, str, isElite, waiting?}] 永続チームリスト
+    promReleLog: []      // [{season, events:[]}] 昇降格ログ（デバッグ用）
+  };
+
+  G.players = buildInitialSquad();
+  rebuildFreeAgents();
+  buildLeague();
+  initAllLeagues();
+  initAllLeagueTables();
+
+  document.getElementById('titleScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  refreshTop();
+  renderTab('dash');
+  notify('ようこそ！'+clubName+'の監督に就任しました！','sp');
+}
+
+function buildInitialSquad() {
+  const players = [];
+  const specs = [
+    {grp:'GK',cnt:2},{grp:'DF',cnt:6},{grp:'MF',cnt:5},{grp:'FW',cnt:4}
+  ];
+  specs.forEach(s => {
+    for (let i=0;i<s.cnt;i++) {
+      players.push(makePlayer(s.grp, 18, 28, 12, 32));
+    }
+  });
+
+  // ===== テスト用: 最強くん（あとで削除）=====
+  const testSpecs = [
+    {pos:'ST',grp:'FW'},{pos:'ST',grp:'FW'},
+    {pos:'CM',grp:'MF'},{pos:'CM',grp:'MF'},
+    {pos:'LM',grp:'MF'},{pos:'RM',grp:'MF'},
+    {pos:'CB',grp:'DF'},{pos:'CB',grp:'DF'},
+    {pos:'LB',grp:'DF'},{pos:'RB',grp:'DF'},
+    {pos:'GK',grp:'GK'},
+  ];
+  testSpecs.forEach(({pos, grp}) => {
+    players.push({
+      id: G.nextPlayerId++,
+      name: '最強くん',
+      pos, grp,
+      age: 25, ability: 84, talent: 84, gt: '普通',
+      peakS: 9999, peakE: 9999, stableE: 9999, retireAge: 9999,
+      salary: 0, fitness: 100, morale: 100,
+      goals: 0, assists: 0, exp: 0
+    });
+  });
+  // ===== テスト用ここまで =====
+
+  return players;
+}
+
+function makePlayer(grp, minAge, maxAge, minAb, maxAb) {
+  const roles = grp==='GK'?GK_ROLES:grp==='DF'?DF_ROLES:grp==='MF'?MF_ROLES:FW_ROLES;
+  const pos = roles[Math.floor(Math.random()*roles.length)];
+  const age = minAge + Math.floor(Math.random()*(maxAge-minAge+1));
+  const talent = 35 + Math.floor(Math.random()*50); // 35~84
+  const ability = Math.max(minAb, Math.min(talent, minAb + Math.floor(Math.random()*(maxAb-minAb+1))));
+  const growthTypes = ['早熟','普通','晩成'];
+  const gt = growthTypes[Math.floor(Math.random()*3)];
+  const peakS = gt==='早熟'?18:gt==='普通'?22:26;
+  const peakE = peakS+3;
+  const stableE = peakE+5;
+  const retireAge = stableE+5;
+  const ln = LASTNAMES[Math.floor(Math.random()*LASTNAMES.length)];
+  const fn = FIRSTNAMES[Math.floor(Math.random()*FIRSTNAMES.length)];
+  return {
+    id: G.nextPlayerId++,
+    name: ln+' '+fn,
+    pos, grp, age, ability, talent, gt,
+    peakS, peakE, stableE, retireAge,
+    salary:0, fitness:85+Math.floor(Math.random()*15),
+    morale:65+Math.floor(Math.random()*25),
+    goals:0, assists:0,
+    exp:0  // 経験値（試合ごとに蓄積、月次で能力値アップ判定）
+  };
+}
+
+function rebuildFreeAgents() {
+  const li = G.leagueIdx;
+  const agents = [];
+  for (let i=0;i<20;i++) {
+    const grp = ['GK','DF','MF','FW'][Math.floor(Math.random()*4)];
+    const minAb = Math.max(10, li*7+5);
+    const maxAb = Math.min(88, li*9+28);
+    const p = makePlayer(grp, 18, 33, minAb, maxAb);
+    p.salary = calcPlayerSalary(p);
+    agents.push(p);
+  }
+  G.freeAgents = agents;
+}
+
+function getCityPool() {
+  const li = G.leagueIdx;
+  if (li <= 3) {
+    // 都道府県リーグ：選択した都道府県の地名
+    return PREFECTURES[G.pref] || PREFECTURES['神奈川'];
+  }
+  if (li <= 5) {
+    // 地域リーグ：同地域の都市
+    const region = PREF_REGION[G.pref] || '関東';
+    return REGION_CITIES[region] || REGION_CITIES['関東'];
+  }
+  // JFL以上：全国主要都市
+  return NATIONAL_CITIES;
+}
+
+// シーズン開始からの経過週数（0〜48）
+function seasonElapsedWeeks() {
+  const startMonth = 6, startWeek = 2;
+  let m = G.month, w = G.week;
+  let totalWeeks = 0;
+  if (m > startMonth || (m === startMonth && w >= startWeek)) {
+    totalWeeks = (m - startMonth) * 4 + (w - startWeek);
+  } else {
+    totalWeeks = (12 - startMonth) * 4 + (4 - startWeek + 1) + (m - 1) * 4 + w;
+  }
+  return Math.max(0, Math.min(48, totalWeeks));
+}
+
+// 1試合シミュレート（strベース）
+function simAIMatch(strH, strW) {
+  const advantage = (strH - strW) / 80; // ホームアドバンテージ込み
+  const baseGoals = 1.3;
+  const hGoals = Math.max(0, Math.round(baseGoals + advantage + (Math.random()*3 - 1)));
+  const aGoals = Math.max(0, Math.round(baseGoals - advantage + (Math.random()*3 - 1)));
+  return [hGoals, aGoals];
+}
+
+// リーグのシーズン全試合を生成（ラウンドロビン）
+// rounds = 1チームあたり試合数、ha = ホームアンドアウェーか
+function generateAILeagueMatches(teams, rounds, ha) {
+  let n = teams.length;
+  const totalMatches = Math.round(rounds * n / 2);
+
+  // 奇数チームの場合はゴーストチーム(-1)を追加して偶数にする
+  const ids = [...Array(n).keys()];
+  if (n % 2 !== 0) ids.push(-1); // ゴースト
+  const m = ids.length; // 偶数
+
+  // 片道ラウンドロビン生成
+  const list = [...ids];
+  const oneRobin = [];
+  for (let r = 0; r < m - 1; r++) {
+    const round = [];
+    for (let i = 0; i < m / 2; i++) {
+      const h = list[i], a = list[m-1-i];
+      if (h !== -1 && a !== -1) round.push([h, a]); // ゴースト戦は除外
+    }
+    oneRobin.push(round);
+    const last = list.splice(m-1, 1)[0];
+    list.splice(1, 0, last);
+  }
+
+  const allMatches = [];
+  const passes = ha ? 2 : Math.ceil(rounds / (n - 1));
+  for (let pass = 0; pass < passes && allMatches.length < totalMatches; pass++) {
+    for (let r = 0; r < oneRobin.length && allMatches.length < totalMatches; r++) {
+      oneRobin[r].forEach(([h, a]) => {
+        if (allMatches.length >= totalMatches) return;
+        allMatches.push(pass % 2 === 0 ? [h, a] : [a, h]);
+      });
+    }
+  }
+  return allMatches;
+}
+
+// 全リーグのダミー順位表を更新（週次）
+function updateAllLeagueTables() {
+  const elapsed = seasonElapsedWeeks();
+  const totalWeeks = 48;
+
+  LEAGUES.forEach((ld, idx) => {
+    if (idx === G.leagueIdx) return;
+    const teamList = (G.allLeagues[idx] || []).filter(t => !t.waiting);
+    if (teamList.length === 0) return;
+
+    const playedPerTeam = Math.min(ld.rounds, Math.round(ld.rounds * elapsed / totalWeeks));
+    const totalMatchesPlayed = Math.round(playedPerTeam * teamList.length / 2);
+
+    // 新シーズン開始時（_matchesがない）: 全試合を事前シミュレート
+    if (!G.allLeagueTables[idx]?._matches) {
+      const matches = generateAILeagueMatches(teamList, ld.rounds, ld.ha);
+      const results = matches.map(([h,a]) => simAIMatch(teamList[h].str, teamList[a].str));
+      G.allLeagueTables[idx] = { matches, results, _matches: true };
+    }
+
+    const { matches, results } = G.allLeagueTables[idx];
+    const stats = teamList.map(() => ({W:0,D:0,L:0,GF:0,GA:0,PTS:0}));
+
+    for (let i = 0; i < Math.min(totalMatchesPlayed, matches.length); i++) {
+      const [h, a] = matches[i];
+      const [hg, ag] = results[i];
+      if (h >= teamList.length || a >= teamList.length) continue;
+      stats[h].GF += hg; stats[h].GA += ag;
+      stats[a].GF += ag; stats[a].GA += hg;
+      if (hg > ag)      { stats[h].W++; stats[h].PTS+=3; stats[a].L++; }
+      else if (hg < ag) { stats[a].W++; stats[a].PTS+=3; stats[h].L++; }
+      else              { stats[h].D++; stats[h].PTS++; stats[a].D++; stats[a].PTS++; }
+    }
+
+    const table = teamList.map((t, i) => ({
+      ...t, ...stats[i],
+      played: stats[i].W + stats[i].D + stats[i].L
+    }));
+    table.sort((a,b) => b.PTS - a.PTS || (b.GF-b.GA) - (a.GF-a.GA));
+    G.allLeagueTables[idx]._table = table;
+  });
+}
+
+// 全リーグのチームリストを初期化（ゲーム開始時1回のみ）
+function initAllLeagues() {
+  LEAGUES.forEach((ld, idx) => {
+    if (G.allLeagues[idx]) return;
+    const base = 12 + idx * 6;
+    const fixedNames = getFixedClubNames(idx);
+
+    let nameList;
+    if (fixedNames) {
+      nameList = [...fixedNames].sort(() => Math.random() - 0.5);
+    } else {
+      nameList = generateLeagueNames(idx, ld.teams);
+    }
+
+    const eliteSlots = new Set();
+    while (eliteSlots.size < Math.min(3, nameList.length - 1))
+      eliteSlots.add(Math.floor(Math.random() * nameList.length));
+
+    G.allLeagues[idx] = nameList.map((name, i) => {
+      const isElite = eliteSlots.has(i);
+      const str = Math.max(10, Math.min(88, base + Math.floor(Math.random()*16) - 5 + (isElite?8:0)));
+      return { name, str, isElite, waiting: false };
+    });
+
+    // JFL（idx=6）: 待機枠3チームを追加（waiting:true）
+    if (idx === 6) {
+      const waitingBase = base - 4;
+      FIXED_CLUBS.jflWaiting.forEach(name => {
+        const str = Math.max(10, Math.min(88, waitingBase + Math.floor(Math.random()*10) - 3));
+        G.allLeagues[6].push({ name, str, isElite: false, waiting: true });
+      });
+    }
+  });
+}
+
+// 都道府県・地域リーグのランダムチーム名生成
+function generateLeagueNames(leagueIdx, count) {
+  let pool;
+  if (leagueIdx <= 3) {
+    pool = PREFECTURES[G.pref] || PREFECTURES['神奈川'];
+  } else {
+    const region = PREF_REGION[G.pref] || '関東';
+    pool = REGION_CITIES[region] || REGION_CITIES['関東'];
+  }
+  const used = new Set([G.clubName]);
+  const names = [];
+  let ci = Math.floor(Math.random() * pool.length);
+  for (let i = 0; i < count; i++) {
+    let nm, tries = 0;
+    do {
+      const city = pool[ci % pool.length];
+      const pre = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
+      nm = pre + ' ' + city;
+      ci++; tries++;
+    } while (used.has(nm) && tries < 50);
+    used.add(nm);
+    names.push(nm);
+  }
+  return names;
+}
+
+function initAllLeagueTables() { updateAllLeagueTables(); }
+
+function getFixedClubNames(leagueIdx) {
+  if (leagueIdx === 6) return [...FIXED_CLUBS.jfl];
+  if (leagueIdx === 7) return [...FIXED_CLUBS.j3];
+  if (leagueIdx === 8) return [...FIXED_CLUBS.j2];
+  if (leagueIdx === 9) return [...FIXED_CLUBS.j1];
+  return null; // 都道府県・地域はランダム生成
+}
+
+function buildAISquad(teamId, leagueIdx, isElite) {
+  const base = 12 + leagueIdx * 6;
+  const eliteBonus = isElite ? 8 : 0;
+  const minAb = Math.max(8, base - 6 + eliteBonus);
+  const maxAb = Math.min(88, base + 8 + eliteBonus);
+  const specs = [{grp:'GK',cnt:2},{grp:'DF',cnt:6},{grp:'MF',cnt:5},{grp:'FW',cnt:4}];
+  const squad = [];
+  specs.forEach(s => {
+    for (let i=0;i<s.cnt;i++) {
+      const p = makePlayer(s.grp, 17, 34, minAb, maxAb);
+      p.teamId = teamId;
+      squad.push(p);
+    }
+  });
+  return squad;
+}
+
+function buildLeague() {
+  const ld = LEAGUES[G.leagueIdx];
+  const teams = [];
+  const fixedNames = getFixedClubNames(G.leagueIdx);
+  teams.push({id:0,name:G.clubName,isMe:true,W:0,D:0,L:0,GF:0,GA:0,PTS:0,str:teamStrength()});
+
+  // 強豪チーム枠（3チーム）
+  const eliteSlots = new Set();
+  while(eliteSlots.size < Math.min(3, ld.teams-1)) {
+    eliteSlots.add(1 + Math.floor(Math.random()*(ld.teams-1)));
+  }
+
+  if (fixedNames) {
+    // JFL以上: 固定クラブ名
+    const shuffled = fixedNames.sort(()=>Math.random()-0.5);
+    for (let i=1;i<ld.teams;i++) {
+      const nm = shuffled[i-1] || shuffled[0];
+      const isElite = eliteSlots.has(i);
+      const base = 12 + G.leagueIdx*6;
+      const eliteBonus = isElite ? 8 : 0;
+      const str = Math.max(10,Math.min(88, base+Math.floor(Math.random()*16)-5+eliteBonus));
+      const tid = i;
+      teams.push({id:tid,name:nm,isMe:false,W:0,D:0,L:0,GF:0,GA:0,PTS:0,str,isElite});
+      if (!G.aiPlayers[tid]) {
+        G.aiPlayers[tid] = buildAISquad(tid, G.leagueIdx, isElite);
+      }
+    }
+  } else {
+    // 都道府県・地域: ランダム生成
+    const cities = getCityPool();
+    const usedNames = new Set([G.clubName]);
+    let cityIdx = Math.floor(Math.random()*cities.length);
+    for (let i=1;i<ld.teams;i++) {
+      let nm, attempts=0;
+      do {
+        const city = cities[cityIdx % cities.length];
+        const prefix = PREFIXES[Math.floor(Math.random()*PREFIXES.length)];
+        nm = prefix+' '+city;
+        cityIdx++; attempts++;
+      } while (usedNames.has(nm) && attempts<50);
+      usedNames.add(nm);
+      const isElite = eliteSlots.has(i);
+      const base = 12 + G.leagueIdx*6;
+      const eliteBonus = isElite ? 8 : 0;
+      const str = Math.max(10,Math.min(88, base+Math.floor(Math.random()*16)-5+eliteBonus));
+      teams.push({id:i,name:nm,isMe:false,W:0,D:0,L:0,GF:0,GA:0,PTS:0,str,isElite});
+    }
+  }
+  G.leagueTable = teams;
+  buildSchedule();
+}
+
+function buildSchedule() {
+  const ld = LEAGUES[G.leagueIdx];
+  const ids = G.leagueTable.map(t=>t.id);
+  const n = ids.length;
+  const totalMatches = Math.round(ld.rounds * n / 2);
+
+  // 奇数チームはゴースト追加
+  const list = [...ids];
+  if (list.length % 2 !== 0) list.push(-1);
+  const m = list.length;
+
+  // 片道ラウンドロビン生成
+  const oneRobin = [];
+  const rotList = [...list];
+  for (let r=0; r<m-1; r++) {
+    const round = [];
+    for (let i=0; i<m/2; i++) {
+      const a = rotList[i], b = rotList[m-1-i];
+      if (a !== -1 && b !== -1) round.push([a, b]);
+    }
+    oneRobin.push(round);
+    const last = rotList.splice(m-1, 1)[0];
+    rotList.splice(1, 0, last);
+  }
+
+  const matches = [];
+  const passes = ld.ha ? 2 : Math.ceil(ld.rounds / (n-1));
+  let wIdx = 0;
+  for (let pass=0; pass<passes && matches.length<totalMatches; pass++) {
+    for (let r=0; r<oneRobin.length && matches.length<totalMatches; r++) {
+      oneRobin[r].forEach(([a,b]) => {
+        if (matches.length >= totalMatches) return;
+        const hId = pass%2===0 ? a : b;
+        const aId = pass%2===0 ? b : a;
+        matches.push({hId, aId, played:false, score:null, wIdx});
+      });
+      wIdx++;
+    }
+  }
+  G.schedule = matches;
+}
+
+// =============================================
+// TIME
+// =============================================
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+function dateLabel() {
+  return G.year+'年 '+MONTHS[G.month-1]+' '+G.week+'週';
+}
+
+function advanceWeek() {
+  processWeek();
+  G.week++;
+  if (G.week>4){ G.week=1; G.month++; }
+  if (G.month>12){ G.month=1; G.year++; }
+  // New season trigger: June week 1
+  if (G.month===6 && G.week===1) endSeason();
+  refreshTop();
+  renderCurrent();
+}
+
+function processWeek() {
+  // --- オファー期限カウントダウン（4週で自動消去）---
+  processScoutOffers();
+  updateAllLeagueTables(); // 他リーグ順位表を週次更新
+  G.offers.forEach(o=>{ if(o.ttl!==undefined) o.ttl--; });
+  const expired = G.offers.filter(o=>o.ttl!==undefined && o.ttl<=0);
+  expired.forEach(o=>{
+    const p=G.players.find(x=>x.id===o.pid);
+    if(p) notify(p.name+' へのオファーが期限切れになりました','');
+  });
+  G.offers = G.offers.filter(o=>o.ttl===undefined || o.ttl>0);
+
+  // --- 承諾済み移籍の処理（翌週離脱）---
+  if (G.pendingTransfers.length > 0) {
+    G.pendingTransfers.forEach(({pid, fee}) => {
+      const p = G.players.find(x=>x.id===pid);
+      if (p) {
+        G.funds += fee;
+        notify(p.name+' が移籍しました。移籍金 ¥'+fmt(fee)+' 入金','ok');
+        G.players = G.players.filter(x=>x.id!==pid);
+        G.lineup  = G.lineup.map(x=>x===pid?null:x);
+        G.bench   = G.bench.map(x=>x===pid?null:x);
+        G.transferList = G.transferList.filter(x=>x!==pid);
+      }
+    });
+    G.pendingTransfers = [];
+  }
+
+  // --- 放出選手の処理 ---
+  if (G.releasePending.length > 0) {
+    G.releasePending.forEach(id => {
+      const p = G.players.find(x=>x.id===id);
+      if (p) notify(p.name+' がチームを離れました','');
+      G.players = G.players.filter(x=>x.id!==id);
+      G.lineup  = G.lineup.map(x=>x===id?null:x);
+      G.bench   = G.bench.map(x=>x===id?null:x);
+    });
+    G.releasePending = [];
+  }
+
+  // --- Match ---
+  const mwi = matchWeekIndex();
+  if (mwi>=0) {
+    const toPlay = G.schedule.filter(m=>!m.played && m.wIdx===mwi);
+    toPlay.forEach(m => simMatch(m));
+    const myM = toPlay.find(m=>m.hId===0||m.aId===0);
+    if (myM) {
+      const isH = myM.hId===0;
+      const myG = isH?myM.score[0]:myM.score[1];
+      const opG = isH?myM.score[1]:myM.score[0];
+      const oppT = getTeam(isH?myM.aId:myM.hId);
+      const r = myG>opG?'勝利':myG===opG?'引き分け':'敗北';
+      const tp = myG>opG?'ok':myG===opG?'':' ng';
+      notify('⚽ '+r+' vs '+(oppT?oppT.name:'?')+' | '+myG+'-'+opG, tp.trim()||'');
+      if (myG>opG) G.morale=Math.min(100,G.morale+5);
+      else if (myG<opG) G.morale=Math.max(10,G.morale-5);
+    }
+  }
+
+  // --- Growth & wages (monthly) ---
+  if (G.week===1) {
+    G.players.forEach(p=>growPlayer(p));
+    growAIPlayers();
+    const wages = G.players.reduce((s,p)=>s+p.salary,0);
+    if (wages > 0) {
+      G.funds -= wages; // マイナスも許容
+      if (G.funds < 0) {
+        notify('⚠️ 資金不足！給与が支払えません。モラール低下。','ng');
+        G.morale = Math.max(5, G.morale - 15);
+      } else {
+        notify('💸 給与 ¥'+fmt(wages),'');
+      }
+    }
+  }
+
+  // --- Fitness recovery ---
+  G.players.forEach(p=>{ p.fitness=Math.min(100,p.fitness+4); });
+
+  // --- Sponsor income ---
+  const ld = LEAGUES[G.leagueIdx];
+  let baseInc = ld.income;
+  // J1のスポンサー収入は前年順位によって3段階
+  if (G.leagueIdx === 9) {
+    const pp = G.prevJ1Pos;
+    if (pp !== null && pp <= 3)       baseInc = 100000000; // 前年3位以上
+    else if (pp !== null && pp <= 9)  baseInc = 60000000;  // 前年4〜9位
+    else                               baseInc = 30000000;  // 前年10位以下/初昇格
+  }
+  const inc = Math.round(baseInc*(1+G.upgrades.sponsor.lv*0.25));
+  G.funds += inc;
+  G.seasonIncome += inc;
+
+  // --- 放映権料（J3以上、6月2週に支払い）---
+  if (G.month === 6 && G.week === 2 && ld.broadcast) {
+    let bcast = ld.broadcast;
+    // J1の場合、前年順位ボーナス加算
+    if (G.leagueIdx === 9) {
+      const bonus = calcJ1BroadcastBonus(G.prevJ1Pos);
+      if (bonus > 0) {
+        notify('📺 放映権料 ¥'+fmt(bcast)+' ＋ 前年度順位ボーナス ¥'+fmt(bonus),'ok');
+        bcast += bonus;
+      } else {
+        notify('📺 放映権料 ¥'+fmt(bcast),'ok');
+      }
+    } else {
+      notify('📺 放映権料 ¥'+fmt(bcast),'ok');
+    }
+    G.funds += bcast;
+    G.seasonIncome += bcast;
+  }
+
+  // --- Transfer offers (window open) ---
+  if (isTransferWindow()) {
+    // 移籍リスト選手は高確率、それ以外はまれに
+    const listPlayers = G.players.filter(p=>G.transferList.includes(p.id)&&!G.offers.find(o=>o.pid===p.id));
+    const otherPlayers = G.players.filter(p=>!G.transferList.includes(p.id)&&p.ability>20&&!G.offers.find(o=>o.pid===p.id));
+
+    listPlayers.forEach(p=>{
+      if (Math.random()<0.35) generateOffer(p);
+    });
+    if (otherPlayers.length>0 && Math.random()<0.08) {
+      generateOffer(otherPlayers[Math.floor(Math.random()*otherPlayers.length)]);
+    }
+  }
+
+  // --- Random event ---
+  if (Math.random()<0.04) {
+    const evs=['地元企業からの追加支援！ ¥50,000 獲得','練習試合で若手が躍動！','地域メディアに取り上げられました','ファン感謝祭で収益獲得 ¥30,000'];
+    const ei = Math.floor(Math.random()*evs.length);
+    notify('📰 '+evs[ei],'sp');
+    if (ei===0) G.funds+=50000;
+    if (ei===3) G.funds+=30000;
+  }
+}
+
+function generateOffer(p) {
+  const fee = Math.round(calcFee(p)*(0.8+Math.random()*0.5));
+  const cities = getCityPool();
+  const tn = PREFIXES[Math.floor(Math.random()*PREFIXES.length)]+' '+cities[Math.floor(Math.random()*cities.length)];
+  // expiresIn: 4週後に自動消去
+  G.offers.push({pid:p.id, fee, team:tn, pending:false, ttl:4});
+  notify('📩 移籍オファー: '+p.name+' ¥'+fmt(fee)+'（'+tn+'）','sp');
+}
+
+function matchWeekIndex() {
+  // Season: Aug w3 = week0, May w4 = last
+  const { month, week } = G;
+  const seqCur = (month-1)*4+(week-1);
+  const seqStart = (8-1)*4+(3-1); // Aug w3
+  let diff = seqCur - seqStart;
+  if (diff < 0) diff += 12*4; // wrap around year
+  const totalMatchWeeks = G.schedule.length;
+  if (diff < 0 || diff >= totalMatchWeeks) return -1;
+  return diff;
+}
+
+function isTransferWindow() {
+  const {month,week}=G;
+  if (month===6&&week>=3) return true;
+  if (month===7) return true;
+  if (month===8) return true;
+  if (month===1) return true;
+  if (month===2&&week<=1) return true;
+  return false;
+}
+
+// リーグ・順位に応じた賞金計算
+function calcPrize(leagueIdx, pos, wins) {
+  switch(leagueIdx) {
+    case 6: // JFL: 勝利数×5万円
+      return wins * 50000;
+    case 7: // J3
+      if (pos === 1) return 5000000;
+      if (pos === 2) return 2500000;
+      return 0;
+    case 8: // J2
+      if (pos === 1) return 20000000;
+      if (pos === 2) return 10000000;
+      if (pos === 3) return 5000000;
+      return 0;
+    case 9: // J1
+      if (pos === 1) return 300000000;
+      if (pos === 2) return 120000000;
+      if (pos === 3) return 60000000;
+      return 0;
+    default: // 都道府県・地域リーグ: 賞金なし
+      return 0;
+  }
+}
+
+// J1放映権料加算（前年順位1〜9位に付与。等比数列 r≈0.725）
+function calcJ1BroadcastBonus(pos) {
+  if (pos === null || pos > 9) return 0;
+  // 1位=5億、公比0.725で9位≒5000万
+  const base = 500000000;
+  const r = 0.725;
+  return Math.round(base * Math.pow(r, pos - 1));
+}
+
+function endSeason() {
+  // ゲームオーバーチェック（資金マイナス）
+  if (G.funds < 0) {
+    openModal(`
+      <div style="text-align:center;padding:24px 12px">
+        <div style="font-size:48px;margin-bottom:12px">💸</div>
+        <div class="mTitle" style="color:var(--red);font-size:22px">ゲームオーバー</div>
+        <div class="f12 t2" style="margin:12px 0 20px">
+          シーズン終了時の資金がマイナスです。<br>
+          クラブは経営破綻しました。<br><br>
+          <b style="color:var(--red)">最終資金: ¥${fmt(G.funds)}</b><br>
+          ${G.season-1}シーズン / ${LEAGUES[G.leagueIdx].name}
+        </div>
+        <button class="btn bG" onclick="location.reload()">タイトルに戻る</button>
+      </div>
+    `);
+    return;
+  }
+
+  // Age players
+  G.players.forEach(p=>p.age++);
+  const retired = G.players.filter(p=>p.age>=p.retireAge);
+  retired.forEach(p=>notify(p.name+' が引退しました',''));
+  G.players = G.players.filter(p=>p.age<p.retireAge);
+
+  // AIチームの加齢・引退・補充
+  Object.values(G.aiPlayers).forEach(squad=>squad.forEach(p=>p.age++));
+  processAIRetirements();
+  replenishAITeams();
+
+  // Result
+  sortTable();
+  const myPos = G.leagueTable.findIndex(t=>t.id===0)+1;
+  const total = G.leagueTable.length;
+  const ld = LEAGUES[G.leagueIdx];
+
+  G.history.push({
+    season:G.season, year:G.year-1,
+    league:ld.name, pos:myPos,
+    rec:`${G.seasonStats.w}勝${G.seasonStats.d}分${G.seasonStats.l}敗`
+  });
+
+  const preLeagueIdx = G.leagueIdx;
+
+  // 他リーグの昇降格処理（ダミーテーブルのチームを入れ替え）
+  processOtherLeaguePromRele();
+
+  // 自チームの昇降格 or プレーオフ
+  const ld2 = LEAGUES[G.leagueIdx];
+  const poStart = ld2.promo + 1;
+  const poEnd   = ld2.promo + ld2.po;  // POゾーン（例: 3〜3位 で1枠）
+  const releZone = total - ld2.rele + 1; // 降格ライン
+
+  if (myPos <= ld2.promo && G.leagueIdx < LEAGUES.length-1) {
+    // 自動昇格
+    G.leagueIdx++;
+    notify('🏆 昇格！ '+LEAGUES[G.leagueIdx].name+' へ！','sp');
+    doEndSeasonFinalize(preLeagueIdx, myPos);
+  } else if (ld2.po > 0 && myPos >= poStart && myPos <= poEnd && G.leagueIdx < LEAGUES.length-1) {
+    // 昇格プレーオフ
+    openPlayoffModal(preLeagueIdx, myPos);
+  } else if (myPos >= releZone && ld2.rele > 0 && G.leagueIdx > 0) {
+    // 降格
+    G.leagueIdx--;
+    notify('⬇️ 降格... '+LEAGUES[G.leagueIdx].name+' へ','ng');
+    doEndSeasonFinalize(preLeagueIdx, myPos);
+  } else {
+    doEndSeasonFinalize(preLeagueIdx, myPos);
+  }
+}
+
+// 他リーグ（ダミー）の昇降格処理
+function processOtherLeaguePromRele() {
+  const season = G.season;
+  const logEvents = [];
+
+  // 下位リーグから順に処理
+  for (let idx = 0; idx < LEAGUES.length - 1; idx++) {
+    const upperIdx = idx + 1;
+
+    // 自チームが絡むリーグ間はスキップ（自チームの昇降格は別途処理）
+    if (idx === G.leagueIdx || upperIdx === G.leagueIdx) continue;
+
+    const lowerLd = LEAGUES[idx];
+    const upperLd = LEAGUES[upperIdx];
+
+    // 今シーズン最終順位表（_table）を取得
+    const lowerTable = G.allLeagueTables[idx]?._table;
+    const upperTable = G.allLeagueTables[upperIdx]?._table;
+    if (!lowerTable || !upperTable) continue;
+
+    // ===== JFL（idx=6）の特殊処理 =====
+    if (upperIdx === 6) {
+      // 設計:
+      // ① JFL実戦下位2チームが地域1部へ降格
+      // ② 待機枠の古参2チームが実戦へ繰り上がり（待機枠が空になる）
+      // ③ 地域1部1位が空いた待機枠2枠のうち1枠へ入る（待機枠は常に2チーム）
+      // ④ もう1枠は翌シーズン以降に地域1位が入ってくる（今は空のまま or 前シーズン残留）
+
+      const jflAll = G.allLeagues[6];
+      const jflActive  = jflAll.filter(t => !t.waiting);
+      const jflWaiting = jflAll.filter(t => t.waiting);
+
+      // ① JFL下位2チームを降格（upperTableの順位末尾から）
+      const jflReleCount = 2;
+      const jflActiveSorted = [...jflActive].sort((a, b) => {
+        const ai = upperTable.findIndex(r => r.name === a.name);
+        const bi = upperTable.findIndex(r => r.name === b.name);
+        // 順位が後ろ（大きい）ほど先に来る
+        return (bi === -1 ? -1 : bi) - (ai === -1 ? -1 : ai);
+      });
+      const jflRelegated     = jflActiveSorted.slice(0, jflReleCount);
+      const jflRelegatedNames = new Set(jflRelegated.map(t => t.name));
+
+      // ② 待機枠全員（2チーム）を実戦へ繰り上げ
+      const promoted = jflWaiting.map(t => ({
+        ...t, waiting: false,
+        str: Math.max(10, Math.min(88, (12+6*6) + Math.floor(Math.random()*10) - 3))
+      }));
+
+      // ③ 地域1部1位を待機枠へ（lowerTableの1位）
+      const lowerActive = G.allLeagues[idx].filter(t => !t.waiting);
+      const lowerSorted = [...lowerActive].sort((a, b) => {
+        const ai = lowerTable.findIndex(r => r.name === a.name);
+        const bi = lowerTable.findIndex(r => r.name === b.name);
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      });
+      const newWaiting = lowerSorted.slice(0, 1).map(t => ({
+        ...t, waiting: true,
+        str: Math.max(10, Math.min(88, (12+6*6) + Math.floor(Math.random()*10) - 5))
+      }));
+      const newWaitingNames = new Set(newWaiting.map(t => t.name));
+
+      // ④ 待機枠の残り1枠は「空」→ 翌シーズンの地域1位で埋まる
+      //    → jflWaitingSlotPending フラグは不要。次シーズンの③で自動的に埋まる
+      //    ただしこのシーズンは待機枠が1チームになる（newWaiting 1チームのみ）
+
+      // 降格チームを地域1部へ
+      const relegatedToLower = jflRelegated.map(t => ({
+        ...t, waiting: false,
+        str: Math.max(10, Math.min(88, (12+5*6) + Math.floor(Math.random()*10) - 3))
+      }));
+
+      G.allLeagues[6] = [
+        ...jflActive.filter(t => !jflRelegatedNames.has(t.name)),
+        ...promoted,
+        ...newWaiting
+      ];
+      G.allLeagues[idx] = [
+        ...lowerActive.filter(t => !newWaitingNames.has(t.name)),
+        ...relegatedToLower
+      ];
+
+      jflRelegated.forEach(t => logEvents.push(`⬇️ ${t.name}：JFL → 地域リーグ1部（降格）`));
+      promoted.forEach(t    => logEvents.push(`🔄 ${t.name}：JFL待機枠 → JFL実戦（繰り上がり）`));
+      newWaiting.forEach(t  => logEvents.push(`⬆️ ${t.name}：地域リーグ1部 → JFL待機枠`));
+      continue;
+    }
+
+    // ===== 通常の昇降格処理（地域以下 & J3/J2/J1） =====
+    const promoCount = lowerLd.promo + lowerLd.po;
+    const releCount  = upperLd.rele;
+
+    // lowerTableの順位順（昇格: 上位、降格: 下位）
+    const lowerSorted = [...G.allLeagues[idx]].filter(t=>!t.waiting).sort((a,b) => {
+      const ai = lowerTable.findIndex(r=>r.name===a.name);
+      const bi = lowerTable.findIndex(r=>r.name===b.name);
+      return (ai===-1?999:ai) - (bi===-1?999:bi);
+    });
+    const upperSorted = [...G.allLeagues[upperIdx]].filter(t=>!t.waiting).sort((a,b) => {
+      const ai = upperTable.findIndex(r=>r.name===a.name);
+      const bi = upperTable.findIndex(r=>r.name===b.name);
+      return (ai===-1?999:ai) - (bi===-1?999:bi);
+    });
+
+    const promoted  = lowerSorted.slice(0, promoCount);
+    const relegated = upperSorted.slice(upperSorted.length - releCount);
+
+    const promotedNames  = new Set(promoted.map(t=>t.name));
+    const relegatedNames = new Set(relegated.map(t=>t.name));
+
+    const upperBase = 12 + upperIdx * 6;
+    const lowerBase = 12 + idx * 6;
+
+    G.allLeagues[upperIdx] = [
+      ...G.allLeagues[upperIdx].filter(t => !relegatedNames.has(t.name)),
+      ...promoted.map(t => ({...t, waiting:false,
+        str: Math.max(10, Math.min(88, upperBase + Math.floor(Math.random()*10) - 3))}))
+    ];
+    G.allLeagues[idx] = [
+      ...G.allLeagues[idx].filter(t => !promotedNames.has(t.name)),
+      ...relegated.map(t => ({...t, waiting:false,
+        str: Math.max(10, Math.min(88, lowerBase + Math.floor(Math.random()*10) - 3))}))
+    ];
+
+    promoted.forEach(t  => logEvents.push(`⬆️ ${t.name}：${lowerLd.name} → ${LEAGUES[upperIdx].name}（昇格）`));
+    relegated.forEach(t => logEvents.push(`⬇️ ${t.name}：${LEAGUES[upperIdx].name} → ${lowerLd.name}（降格）`));
+  }
+
+  G.promReleLog.push({ season, events: logEvents });
+  logEvents.forEach(e => notify(e, e.startsWith('⬆️')?'ok':e.startsWith('🔄')?'':'ng'));
+}
+
+// プレーオフモーダル（自チームのみ）
+function openPlayoffModal(preLeagueIdx, myPos) {
+  const ld = LEAGUES[G.leagueIdx];
+  const nextLeague = LEAGUES[G.leagueIdx + 1];
+
+  // 相手チームをリーグ表から選ぶ（POゾーンから自チーム以外）
+  sortTable();
+  const poTeams = G.leagueTable.filter(t => !t.isMe)
+    .slice(ld.promo, ld.promo + ld.po * 2) // PO圏のAIチーム
+    .slice(0, 2);
+  const opponent = poTeams[Math.floor(Math.random() * poTeams.length)] || G.leagueTable[ld.promo];
+
+  // 簡易PO: 1試合制（ホームアドバンテージ: 自チーム有利）
+  const myStr = teamStrength();
+  const oppStr = opponent ? opponent.str : myStr;
+  const diff = (myStr + 8 + rn(25) - 12) - (oppStr + rn(25) - 12);
+  const win = diff > 0;
+  const myG = Math.max(0, Math.floor(Math.random() * 3) + (win ? 1 : 0));
+  const oppG = Math.max(0, myG - (win ? 1 : -1) + rn(2) - 1);
+  const scoreStr = myG + ' - ' + Math.max(0, oppG);
+
+  openModal(`
+    <div style="text-align:center;padding:20px 12px">
+      <div style="font-size:36px;margin-bottom:8px">${win ? '🏆' : '😔'}</div>
+      <div class="mTitle" style="color:${win?'var(--gold)':'var(--red)'};font-size:20px">
+        昇格プレーオフ ${win ? '勝利！' : '敗退'}
+      </div>
+      <div style="margin:12px 0;font-size:13px;color:var(--text2)">
+        vs ${opponent ? opponent.name : '相手チーム'}
+      </div>
+      <div style="font-family:var(--fontH);font-size:32px;margin:8px 0;color:${win?'var(--gold)':'var(--text)'}">
+        ${scoreStr}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin:12px 0">
+        ${win ? nextLeague.name+'への昇格が決定しました！' : 'プレーオフで敗れ、'+ld.name+'に残留します'}
+      </div>
+      <button class="btn bG" style="margin-top:8px" onclick="closeModal();resolvePlayoff(${win},${preLeagueIdx},${myPos})">
+        続ける
+      </button>
+    </div>
+  `);
+}
+
+function resolvePlayoff(win, preLeagueIdx, myPos) {
+  if (win) {
+    G.leagueIdx++;
+    notify('🏆 プレーオフ勝利！ '+LEAGUES[G.leagueIdx].name+' へ昇格！','sp');
+  } else {
+    notify('残留確定。来季も'+LEAGUES[G.leagueIdx].name+'で戦います','');
+  }
+  doEndSeasonFinalize(preLeagueIdx, myPos);
+}
+
+function doEndSeasonFinalize(preLeagueIdx, myPos) {
+  // 賞金
+  const prize = calcPrize(preLeagueIdx, myPos, G.seasonStats.w);
+  if (prize > 0) {
+    G.funds += prize;
+    G.seasonIncome += prize;
+    notify('🏆 賞金 ¥'+fmt(prize),'ok');
+  }
+
+  // 前年J1順位を記録
+  if (preLeagueIdx === 9) G.prevJ1Pos = myPos;
+  else if (G.leagueIdx !== 9) G.prevJ1Pos = null;
+
+  G.season++;
+  G.seasonStats={w:0,d:0,l:0,gf:0,ga:0};
+  G.seasonIncome=0;
+  // _matchesだけリセット（チームリストはallLeaguesで永続管理）
+  Object.keys(G.allLeagueTables).forEach(k => {
+    G.allLeagueTables[k] = { _matches: false };
+  });
+  buildLeague();
+  rebuildFreeAgents();
+  updateSalaries();
+}
+
+// =============================================
+// MATCH SIMULATION
+// =============================================
+function simMatch(m) {
+  const ht = getTeam(m.hId);
+  const at = getTeam(m.aId);
+  if (!ht||!at) return;
+  const hs = ht.isMe ? teamStrength() : ht.str;
+  const as = at.isMe ? teamStrength() : at.str;
+  const diff = (hs+5+rn(20)-10) - (as+rn(20)-10);
+  const hxg = Math.max(0.2, 1.5+diff*0.03);
+  const axg = Math.max(0.2, 1.5-diff*0.03);
+  const hg = poisson(hxg);
+  const ag = poisson(axg);
+  m.played=true; m.score=[hg,ag];
+  addTableResult(ht,hg,ag);
+  addTableResult(at,ag,hg);
+  if (ht.isMe||at.isMe) {
+    const isH=ht.isMe;
+    const mg=isH?hg:ag, og=isH?ag:hg;
+    const res=mg>og?'win':mg===og?'draw':'loss';
+    G.results.push({hId:m.hId,aId:m.aId,hName:ht.name,aName:at.name,score:[hg,ag],res});
+    if (res==='win'){G.seasonStats.w++;G.morale=Math.min(100,G.morale+3);}
+    else if(res==='draw')G.seasonStats.d++;
+    else{G.seasonStats.l++;G.morale=Math.max(10,G.morale-3);}
+    G.seasonStats.gf+=mg; G.seasonStats.ga+=og;
+    distGoals(mg);
+    // 経験値付与
+    grantMatchExp(res, mg);
+    // スタジアム観客収入（ホーム開催時、J3以上かつLv1以上）
+    if(isH && G.leagueIdx>=7 && G.upgrades.stadium.lv>0){
+      const stadInc=calcStadiumIncome(G.upgrades.stadium.lv);
+      G.funds+=stadInc;
+      G.seasonIncome+=stadInc;
+      notify('🏟️ 観客収入 ¥'+fmt(stadInc),'ok');
+    }
+  }
+}
+
+function addTableResult(t,gf,ga){
+  t.GF+=gf; t.GA+=ga;
+  if(gf>ga){t.W++;t.PTS+=3;}
+  else if(gf===ga){t.D++;t.PTS+=1;}
+  else t.L++;
+}
+
+function distGoals(n){
+  const fws=G.lineup.filter(id=>id!==null).map(id=>G.players.find(p=>p.id===id)).filter(p=>p&&(p.grp==='FW'||p.grp==='MF'));
+  for(let i=0;i<n;i++){
+    if(fws.length>0) fws[Math.floor(Math.random()*fws.length)].goals++;
+  }
+}
+
+function poisson(l){
+  let L=Math.exp(-l),p=1,k=0;
+  do{k++;p*=Math.random();}while(p>L);
+  return k-1;
+}
+function rn(n){return Math.floor(Math.random()*n);}
+
+// =============================================
+// PLAYER UTILS
+// =============================================
+// AIチームの月次成長（簡略版）
+function growAIPlayers() {
+  Object.entries(G.aiPlayers).forEach(([tid, squad]) => {
+    squad.forEach(p => {
+      if (!p.exp) p.exp = 0;
+      // AI選手は先発固定として簡易EXP付与（週2試合×月4週想定）
+      p.exp += 8 * 8;
+      growPlayer(p);
+    });
+  });
+}
+
+// AIチームの選手補充（不足時）
+function replenishAITeams() {
+  G.leagueTable.forEach(t => {
+    if (t.isMe) return;
+    if (!G.aiPlayers[t.id]) G.aiPlayers[t.id] = [];
+    const squad = G.aiPlayers[t.id];
+    // 引退・移籍で減った分を補充
+    while (squad.length < 17) {
+      const grps = ['GK','DF','DF','DF','MF','MF','FW'];
+      const grp = grps[Math.floor(Math.random()*grps.length)];
+      const p = buildAISquad(t.id, G.leagueIdx, t.isElite||false);
+      const newP = p[0];
+      newP.teamId = t.id;
+      squad.push(newP);
+    }
+    // チーム強度を選手の平均能力値で更新
+    const avg = Math.round(squad.reduce((s,p)=>s+p.ability,0)/squad.length);
+    t.str = Math.max(10, Math.min(88, avg));
+  });
+}
+
+// シーズン末: AI選手の引退処理 → FAへ流出
+function processAIRetirements() {
+  Object.entries(G.aiPlayers).forEach(([tid, squad]) => {
+    const retiring = squad.filter(p => p.age >= p.retireAge);
+    retiring.forEach(p => {
+      // 能力値が高い引退選手はFAリストに追加
+      if (p.ability >= 30) {
+        p.teamId = null;
+        G.freeAgents.push(p);
+      }
+    });
+    G.aiPlayers[tid] = squad.filter(p => p.age < p.retireAge);
+  });
+  // FAリストは最大30件に制限
+  if (G.freeAgents.length > 30) {
+    G.freeAgents = G.freeAgents.sort((a,b)=>b.ability-a.ability).slice(0,30);
+  }
+}
+function rawExpDiff(ab){
+  function f(x){ return Math.max(0,Math.floor(1.2*Math.pow(x,3)-15*Math.pow(x,2)+100*x-140)); }
+  return Math.max(1, f(ab+1)-f(ab));
+}
+
+// フェーズ別C係数（小さいほど必要EXPが少なく伸びやすい）
+function growthCoef(p){
+  const {age,peakS,peakE,stableE}=p;
+  if(age>=peakS && age<=peakE) return 0.017; // 成長期：伸びやすい
+  if(age>stableE) return null;               // 衰退期：EXP制ではない
+  if(age<=stableE && age>peakE) return 0.017;// 安定期
+  return 0.30;                               // 成長前：伸びにくい
+}
+
+// 試合後の経験値付与
+function grantMatchExp(result, myGoals){
+  const trainMult = 1 + G.upgrades.train.lv * 0.05; // Lv20で×2.0
+  const starterIds = new Set(G.lineup.filter(x=>x!==null));
+  const benchIds   = new Set(G.bench.filter(x=>x!==null));
+
+  G.players.forEach(p=>{
+    let base = 0;
+    if(starterIds.has(p.id)){
+      base = 10;                              // 先発出場
+      if(result==='win')  base += 5;          // 勝利ボーナス
+      else if(result==='draw') base += 2;     // 引き分けボーナス
+    } else if(benchIds.has(p.id)){
+      base = 3;                               // ベンチ入り
+    } else {
+      base = 1;                               // 出場なし（自主練）
+    }
+    // ゴール・アシストボーナス（scoring playerに付与）
+    if(starterIds.has(p.id) && p.goals > (p._prevGoals||0)){
+      base += 8 * (p.goals - (p._prevGoals||0));
+    }
+    p._prevGoals = p.goals;
+
+    p.exp = (p.exp||0) + Math.round(base * trainMult);
+  });
+}
+
+// 月次成長処理（growPlayer → EXPを能力値に変換）
+function growPlayer(p){
+  const {age,peakS,peakE,stableE,talent}=p;
+  if(p.exp===undefined) p.exp=0;
+
+  // 衰退期：EXP制ではなく老化で下がる
+  if(age>stableE){
+    const yrs=age-stableE;
+    const decayChance = yrs>3 ? 0.85 : 0.5;
+    if(Math.random()<decayChance) p.ability=Math.max(1,p.ability-1);
+    return;
+  }
+
+  // 成長前〜安定期：貯まったEXPで能力値アップ
+  const C = growthCoef(p);
+  if(C===null) return;
+
+  let leveled = false;
+  while(p.ability < talent && p.exp > 0){
+    const needed = Math.max(1, Math.round(rawExpDiff(p.ability) * C));
+    if(p.exp >= needed){
+      p.exp -= needed;
+      p.ability = Math.min(talent, p.ability+1);
+      leveled = true;
+    } else {
+      break;
+    }
+  }
+  return leveled;
+}
+
+// スロットのポジションロールからグループを返す
+function roleToGrp(r){
+  if(GK_ROLES.includes(r)) return 'GK';
+  if(DF_ROLES.includes(r)) return 'DF';
+  if(MF_ROLES.includes(r)) return 'MF';
+  return 'FW';
+}
+
+// ポジション一致チェック（スロットのroleと選手のposが一致）
+function isPosMatch(slotRole, player){
+  return slotRole === player.pos;
+}
+
+// 一致レベルを返す
+// 'exact'   : スロットrole === 選手pos（完全一致）→ 緑・ペナルティなし
+// 'grp'     : 同グループ内だが完全不一致 → 黄・-10か30%減
+// 'out'     : グループ外 → 赤・-20か50%減
+// 'gk_out'  : GKがGK以外のスロット → 赤・能力1割
+function matchLevel(player, slotRole){
+  const slotGrp = roleToGrp(slotRole);
+  if(isPosMatch(slotRole, player)) return 'exact';
+  if(player.grp === 'GK' && slotGrp !== 'GK') return 'gk_out';
+  if(player.grp === slotGrp) return 'grp';
+  return 'out';
+}
+
+// 実効能力値
+function effectiveAbility(player, slotRole){
+  const lv = matchLevel(player, slotRole);
+  if(lv === 'exact') return player.ability;
+  if(lv === 'grp'){
+    const pen = Math.max(10, Math.floor(player.ability * 0.3));
+    return Math.max(1, player.ability - pen);
+  }
+  if(lv === 'gk_out'){
+    return Math.floor(player.ability * 0.1);
+  }
+  // 'out': グループ外
+  const pen = Math.max(20, Math.floor(player.ability * 0.5));
+  return Math.max(1, player.ability - pen);
+}
+
+// 一致レベルに対応する表示色
+function matchColor(lv){
+  if(lv === 'exact') return 'var(--green)';
+  if(lv === 'grp')   return 'var(--yellow)';
+  return 'var(--red)'; // out / gk_out
+}
+
+function teamStrength(){
+  const slots = FMTNS[G.formation];
+  const starters = G.lineup.map((id, i) => {
+    if(id === null) return null;
+    const p = G.players.find(x=>x.id===id);
+    if(!p) return null;
+    return effectiveAbility(p, slots[i] ? slots[i].r : p.pos);
+  }).filter(x=>x!==null);
+  if(!starters.length){
+    const best=[...G.players].sort((a,b)=>b.ability-a.ability).slice(0,11);
+    return best.length?Math.round(best.reduce((s,p)=>s+p.ability,0)/best.length):15;
+  }
+  return Math.round(starters.reduce((s,v)=>s+v,0)/starters.length);
+}
+
+function calcPlayerSalary(p){
+  const base=LEAGUES[G.leagueIdx].baseSal;
+  return Math.round(base*(p.ability/38));
+}
+
+function calcFee(p){
+  const af=p.age<24?1.6:p.age<29?1.0:0.55;
+  return Math.round(p.ability*p.ability*180*af);
+}
+
+function calcNegoChance(p,isFree){
+  const base=0.45+G.leagueIdx*0.04+G.upgrades.nego.lv*0.08;
+  const gap=p.ability-teamStrength();
+  const pen=Math.max(0,gap*0.012);
+  return Math.max(0.05,Math.min(0.92,base-pen+(isFree?0.18:0)));
+}
+
+function updateSalaries(){
+  G.players.forEach(p=>{p.salary=calcPlayerSalary(p);});
+}
+
+function autoLineup(){
+  const slots=FMTNS[G.formation];
+  const lu=Array(slots.length).fill(null);
+  const bn=Array(8).fill(null);
+  const used=new Set();
+  slots.forEach((sl,i)=>{
+    const grp=GK_ROLES.includes(sl.r)?'GK':DF_ROLES.includes(sl.r)?'DF':MF_ROLES.includes(sl.r)?'MF':'FW';
+    let best=G.players.filter(p=>p.grp===grp&&!used.has(p.id)).sort((a,b)=>b.ability-a.ability)[0];
+    if(!best) best=G.players.filter(p=>!used.has(p.id)).sort((a,b)=>b.ability-a.ability)[0];
+    if(best){lu[i]=best.id;used.add(best.id);}
+  });
+  let bi=0;
+  G.players.filter(p=>!used.has(p.id)).sort((a,b)=>b.ability-a.ability).forEach(p=>{
+    if(bi<8){bn[bi++]=p.id;used.add(p.id);}
+  });
+  G.lineup=lu; G.bench=bn;
+}
+
+function getTeam(id){return G.leagueTable.find(t=>t.id===id);}
+function sortTable(){
+  G.leagueTable.sort((a,b)=>{
+    if(b.PTS!==a.PTS)return b.PTS-a.PTS;
+    const da=a.GF-a.GA,db=b.GF-b.GA;
+    if(db!==da)return db-da;
+    return b.GF-a.GF;
+  });
+}
+
+// =============================================
+// ABILITY HELPERS
+// =============================================
+function abColor(ab,a=1){
+  if(ab>80) return`rgba(0,160,255,${a})`;   // 青
+  if(ab>60) return`rgba(0,204,102,${a})`;   // 緑
+  if(ab>40) return`rgba(255,204,0,${a})`;   // 黄
+  return`rgba(255,68,68,${a})`;             // 赤
+}
+function abBarClass(ab){
+  return'background:'+abColor(ab);
+}
+function tagGrp(grp){
+  return`<span class="tag t${grp}">${grp}</span>`;
+}
+function gtTag(gt){
+  const cls=gt==='早熟'?'tFW':gt==='普通'?'tMF':'tDF';
+  return`<span class="tag ${cls}">${gt}</span>`;
+}
+function fmt(n){return Math.abs(Math.round(n)).toLocaleString('ja-JP');}
+
+// =============================================
+// TOP BAR
+// =============================================
+function refreshTop(){
+  document.getElementById('tbClub').textContent=G.clubName;
+  document.getElementById('tbDate').textContent=dateLabel();
+  document.getElementById('tbLeague').textContent=LEAGUES[G.leagueIdx].name;
+  document.getElementById('tbMoney').textContent='¥'+fmt(G.funds);
+  sortTable();
+  const pos=G.leagueTable.findIndex(t=>t.id===0)+1;
+  document.getElementById('tbRank').textContent=pos+'位/'+G.leagueTable.length+'チーム';
+}
+
+// =============================================
+// TAB ROUTING
+// =============================================
+let curTab='dash';
+function renderTab(tab){
+  curTab=tab;
+  document.querySelectorAll('.nBtn').forEach(b=>{
+    b.classList.toggle('on',b.dataset.tab===tab);
+  });
+  const el=document.getElementById('content');
+  const renders={
+    dash:renderDash, squad:renderSquad, tactics:renderTactics,
+    transfer:renderTransfer, league:renderLeague, results:renderResults,
+    club:renderClub, finance:renderFinance
+  };
+  el.innerHTML=(renders[tab]||renderDash)();
+}
+function renderCurrent(){renderTab(curTab);}
+
+// =============================================
+// DASHBOARD
+// =============================================
+function renderDash(){
+  const st=G.seasonStats;
+  const myT=G.leagueTable.find(t=>t.id===0)||{PTS:0};
+  sortTable();
+  const pos=G.leagueTable.findIndex(t=>t.id===0)+1;
+  const total=G.leagueTable.length;
+  const inW=isTransferWindow();
+  const nextM=G.schedule.find(m=>!m.played&&(m.hId===0||m.aId===0));
+  const recent=G.results.slice(-5).reverse();
+  const ts=teamStrength();
+
+  // ナビゲーションボタン定義 (2列×4行)
+  const navItems=[
+    {tab:'squad',   icon:'👥', label:'選手一覧',     sub:`${G.players.length}名在籍`},
+    {tab:'tactics', icon:'⚽', label:'フォーメーション', sub:G.formation},
+    {tab:'transfer',icon:'🔄', label:'移籍市場',      sub:inW?`🔔 窓口開催中${G.offers.length>0?' 📩'+G.offers.length+'件':''}`:G.offers.length>0?`📩 ${G.offers.length}件のオファー`:'窓口閉鎖中'},
+    {tab:'league',  icon:'🏆', label:'リーグ',        sub:`${LEAGUES[G.leagueIdx].name} ${pos}位/${total}チーム`},
+    {tab:'results', icon:'📋', label:'試合結果',       sub:`${st.w}勝${st.d}分${st.l}敗`},
+    {tab:'club',    icon:'🏟️', label:'クラブ強化',    sub:`資金 ¥${G.funds>=0?fmt(G.funds):'▲'+fmt(-G.funds)}`},
+    {tab:'finance', icon:'💰', label:'財務',          sub:`今季収入 ¥${fmt(G.seasonIncome)}`},
+    {tab:'league',  icon:'📊', label:'チーム強度',     sub:`平均 ${ts} / モラール ${G.morale}%`},
+  ];
+
+  return`
+<div class="g2">
+<div>
+  <div class="card">
+    <div class="cTitle">クラブ概要</div>
+    <div style="text-align:center;padding:8px 0 16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${LEAGUES[G.leagueIdx].name} 現在順位</div>
+      <div style="font-family:var(--fontH);font-size:56px;color:var(--accent);line-height:1">${pos}</div>
+      <div style="font-size:13px;color:var(--text2)">位 / ${total}チーム中　勝点 <b style="color:var(--gold)">${myT.PTS}</b></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${navItems.map(n=>`
+        <div onclick="renderTab('${n.tab}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:18px;margin-bottom:2px">${n.icon}</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${n.label}</div>
+          <div style="font-size:11px;color:${n.tab==='transfer'&&inW?'var(--gold)':'var(--text2)'}">${n.sub}</div>
+        </div>`).join('')}
+    </div>
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="cTitle" style="display:flex;justify-content:space-between;align-items:center">
+      <span>📋 昇降格ログ</span>
+      <span class="f11 t2">${G.promReleLog.length}シーズン分</span>
+    </div>
+    ${G.promReleLog.length === 0
+      ? '<div class="t2 f12" style="text-align:center;padding:12px">まだ記録がありません</div>'
+      : `<div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+        ${[...G.promReleLog].reverse().map(log => `
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">Season ${log.season}</div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              ${log.events.map(e => `
+                <div style="font-size:11px;color:${e.startsWith('⬆️')?'var(--green)':e.startsWith('⬇️')?'var(--red)':'var(--yellow)'};padding:2px 0;border-bottom:1px solid var(--border)">${e}</div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>`
+    }
+  </div>
+
+  <div class="card">
+    <div class="cTitle">次の試合</div>
+    ${nextM?(()=>{
+      const ht=getTeam(nextM.hId),at=getTeam(nextM.aId);
+      const isH=nextM.hId===0;
+      return`<div style="text-align:center;padding:8px 0">
+        <div class="f12 t2" style="margin-bottom:8px">${LEAGUES[G.leagueIdx].name}</div>
+        <div class="row" style="justify-content:center;gap:16px">
+          <div style="font-weight:700;font-size:14px;color:${nextM.hId===0?'var(--accent)':'var(--text)'}">${ht?ht.name:'?'}</div>
+          <div style="font-family:var(--fontH);font-size:18px;color:var(--text2)">VS</div>
+          <div style="font-weight:700;font-size:14px;color:${nextM.aId===0?'var(--accent)':'var(--text)'}">${at?at.name:'?'}</div>
+        </div>
+        <div class="f11 t2 mt10">${isH?'🏠 ホーム':'✈️ アウェー'}</div>
+      </div>`;
+    })():'<div class="t2 f12" style="text-align:center;padding:16px">試合予定なし</div>'}
+  </div>
+
+  <div class="card">
+    <div class="cTitle">直近の試合結果</div>
+    ${recent.length===0?'<div class="t2 f12">まだ試合がありません</div>':
+    `<div style="display:flex;flex-direction:column;gap:6px">
+    ${recent.map(r=>{
+      const isH=r.hId===0;
+      const myG=isH?r.score[0]:r.score[1],opG=isH?r.score[1]:r.score[0];
+      const cls=r.res==='win'?'w':r.res==='draw'?'d':'l';
+      const lbl=r.res==='win'?'勝':r.res==='draw'?'分':'敗';
+      return`<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);padding:7px 10px;border-radius:5px">
+        <span class="rball ${cls}">${lbl}</span>
+        <span class="f12" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.hName} vs ${r.aName}</span>
+        <span style="font-family:var(--fontH);font-size:15px;color:${r.res==='win'?'var(--green)':r.res==='draw'?'var(--yellow)':'var(--red)'}">${r.score[0]}-${r.score[1]}</span>
+      </div>`;
+    }).join('')}
+    </div>`}
+  </div>
+
+  <div class="card">
+    <div class="cTitle">順位表（上位5）</div>
+    <div class="tw">
+      <table>
+        <tr><th>#</th><th>チーム</th><th>勝点</th><th>W</th><th>D</th><th>L</th><th>得失</th></tr>
+        ${G.leagueTable.slice(0,5).map((t,i)=>`
+          <tr class="${t.id===0?'myRow':''}">
+            <td>${i+1}</td>
+            <td>${t.id===0?'⭐ ':''}<b>${t.name}</b></td>
+            <td><b>${t.PTS}</b></td>
+            <td>${t.W}</td><td>${t.D}</td><td>${t.L}</td>
+            <td>${t.GF-t.GA>=0?'+':''}${t.GF-t.GA}</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+  </div>
+</div>
+</div>`;
+}
+
+// =============================================
+// SQUAD
+// =============================================
+// フェーズ名と残り年数を返す共通関数
+function getPhaseInfo(p) {
+  if (p.age < p.peakS) {
+    return { name:'成長前', color:'var(--text2)', bg:'rgba(136,146,170,.15)', rem: p.peakS - p.age };
+  }
+  if (p.age <= p.peakE) {
+    return { name:'成長期', color:'var(--green)', bg:'rgba(0,204,102,.2)', rem: p.peakE - p.age + 1 };
+  }
+  if (p.age <= p.stableE) {
+    return { name:'安定期', color:'rgba(0,160,255,1)', bg:'rgba(0,160,255,.18)', rem: p.stableE - p.age + 1 };
+  }
+  if (p.age < p.retireAge) {
+    return { name:'衰退期', color:'var(--red)', bg:'rgba(255,68,68,.18)', rem: p.retireAge - p.age };
+  }
+  return { name:'引退間近', color:'var(--red)', bg:'rgba(255,68,68,.3)', rem: 0 };
+}
+
+function phaseTagHtml(p) {
+  const ph = getPhaseInfo(p);
+  return `<span class="tag" style="background:${ph.bg};color:${ph.color}">${ph.name}</span>`;
+}
+
+function phaseRemHtml(p) {
+  const ph = getPhaseInfo(p);
+  return `<span style="font-size:10px;color:${ph.color}">残${ph.rem}年</span>`;
+}
+
+// ソート状態
+let squadSort = { key: 'grp', dir: 1 };
+
+function setSquadSort(key) {
+  if (squadSort.key === key) {
+    squadSort.dir *= -1;
+  } else {
+    squadSort.key = key;
+    squadSort.dir = 1;
+  }
+  renderTab('squad');
+}
+
+function squadSortArrow(key) {
+  if (squadSort.key !== key) return '<span style="color:var(--border);margin-left:3px">⇅</span>';
+  return squadSort.dir === 1
+    ? '<span style="color:var(--accent);margin-left:3px">↑</span>'
+    : '<span style="color:var(--accent);margin-left:3px">↓</span>';
+}
+
+function renderSquad(){
+  const grpOrder = ['GK','DF','MF','FW'];
+  const posOrder = ['GK','CB','LB','RB','DM','CM','AM','LM','RM','ST','LW','RW'];
+  const gtOrder  = ['早熟','普通','晩成'];
+  const phOrder  = ['成長前','成長期','安定期','衰退期','引退間近'];
+
+  const sorted = [...G.players].sort((a,b) => {
+    let va, vb;
+    switch(squadSort.key) {
+      case 'name':    return a.name.localeCompare(b.name,'ja')*squadSort.dir;
+      case 'age':     va=a.age;     vb=b.age;     break;
+      case 'ability': va=a.ability; vb=b.ability; break;
+      case 'talent':  va=a.talent;  vb=b.talent;  break;
+      case 'pos':
+        va=posOrder.indexOf(a.pos); vb=posOrder.indexOf(b.pos);
+        if(va===vb){ va=a.ability*-1; vb=b.ability*-1; }
+        break;
+      case 'gt':
+        va=gtOrder.indexOf(a.gt); vb=gtOrder.indexOf(b.gt);
+        if(va===vb){ va=-a.ability; vb=-b.ability; }
+        break;
+      case 'phase':
+        va=phOrder.indexOf(getPhaseInfo(a).name); vb=phOrder.indexOf(getPhaseInfo(b).name);
+        if(va===vb){ va=getPhaseInfo(a).rem*-1; vb=getPhaseInfo(b).rem*-1; }
+        break;
+      case 'grp':
+      default:
+        va=grpOrder.indexOf(a.grp)*100-a.ability;
+        vb=grpOrder.indexOf(b.grp)*100-b.ability;
+        break;
+    }
+    return (va-vb)*squadSort.dir;
+  });
+
+  function thSort(key, label) {
+    return `<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="setSquadSort('${key}')">${label}${squadSortArrow(key)}</th>`;
+  }
+
+  return`
+<div class="card">
+  <div class="row between mb10">
+    <div class="cTitle" style="margin:0">選手一覧 (${G.players.length}名)</div>
+    <button class="btn b2" onclick="showTopScorers()">得点ランク</button>
+  </div>
+  <div class="tw">
+    <table>
+      <tr>
+        ${thSort('name','名前')}
+        ${thSort('age','歳')}
+        ${thSort('pos','Pos')}
+        ${thSort('ability','能力')}
+        ${thSort('talent','才能')}
+        ${thSort('gt','成長')} ${thSort('phase','フェーズ／残り')}
+        <th>体力</th><th>G</th><th>給与</th><th></th>
+      </tr>
+      ${sorted.map(p=>`<tr style="${G.releasePending.includes(p.id)?'opacity:.55':''}">
+        <td><b>${p.name}</b>${G.releasePending.includes(p.id)?'<span style="margin-left:6px;font-size:10px;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:3px">放出予定</span>':''}</td>
+        <td>${p.age}</td>
+        <td>${tagGrp(p.grp)} <span class="f11 t2">${p.pos}</span></td>
+        <td>
+          <div class="row" style="gap:5px">
+            <div class="abadge" style="background:${abColor(p.ability,.18)};color:${abColor(p.ability)}">${p.ability}</div>
+            <div class="abar" style="width:28px"><div class="afill" style="${abBarClass(p.ability)};width:${p.ability}%"></div></div>
+          </div>
+        </td>
+        <td style="color:${p.talent>70?'var(--gold)':p.talent>50?'var(--accent)':'var(--text2)'}">${p.talent}</td>
+        <td style="white-space:nowrap">${gtTag(p.gt)}</td>
+        <td style="white-space:nowrap">${phaseTagHtml(p)} ${phaseRemHtml(p)}</td>
+        <td>
+          <div class="row" style="gap:4px;font-size:10px">
+            <div class="abar" style="width:19px"><div class="afill" style="background:${p.fitness>65?'var(--green)':p.fitness>40?'var(--yellow)':'var(--red)'};width:${p.fitness}%"></div></div>
+            ${p.fitness}%
+          </div>
+        </td>
+        <td>${p.goals}⚽</td>
+        <td class="t2 f11">¥${fmt(p.salary)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn b2" style="margin-right:4px" onclick="showPDetail(${p.id})">詳細</button>
+          <button class="btn ${G.transferList.includes(p.id)?'bG':'b2'}" style="font-size:10px;padding:3px 7px" onclick="toggleTransferList(${p.id})" title="${G.transferList.includes(p.id)?'移籍リストから除外':'移籍リストに追加'}">
+            ${G.transferList.includes(p.id)?'📋✓':'📋'}
+          </button>
+        </td>
+      </tr>`).join('')}
+    </table>
+  </div>
+</div>`;
+}
+
+function showPDetail(id){
+  const p=G.players.find(x=>x.id===id);
+  if(!p)return;
+  const phase=p.age<p.peakS?'成長前':p.age<=p.peakE?'⬆️ 成長期':p.age<=p.stableE?'🟢 安定期':'🔴 衰退期';
+  openModal(`
+    <button class="mClose" onclick="closeModal()">✕</button>
+    <div class="mTitle">${p.name}</div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="sb"><div class="sbL">能力値</div><div class="sbV" style="color:${abColor(p.ability)}">${p.ability}</div></div>
+      <div class="sb"><div class="sbL">才能上限</div><div class="sbV cgo">${p.talent}</div></div>
+      <div class="sb"><div class="sbL">年齢</div><div class="sbV">${p.age}歳</div></div>
+      <div class="sb"><div class="sbL">フェーズ</div><div class="sbV" style="font-size:13px">${phase}</div></div>
+    </div>
+    <div style="background:var(--bg3);border-radius:6px;padding:11px;font-size:12px;display:flex;flex-direction:column;gap:6px">
+      ${[
+        ['ポジション',tagGrp(p.grp)+' '+p.pos],
+        ['成長タイプ',gtTag(p.gt)],
+        ['成長期',p.peakS+'〜'+p.peakE+'歳'],
+        ['安定期終了',p.stableE+'歳'],
+        ['引退予定',p.retireAge+'歳'],
+        ['今季ゴール',p.goals+'⚽'],
+        ['給与','¥'+fmt(p.salary)+'/月'],
+        ['フィットネス',p.fitness+'%'],
+      ].map(([l,v])=>`<div class="row between"><span class="t2">${l}</span><span>${v}</span></div>`).join('')}
+    </div>
+    <div class="mt10">
+      <div class="sbL" style="margin-bottom:5px">能力 vs 才能上限</div>
+      <div class="row" style="gap:6px;font-size:11px;margin-bottom:4px">
+        <span class="t2" style="width:60px">現在値</span>
+        <div class="abar" style="flex:1"><div class="afill" style="${abBarClass(p.ability)};width:${p.ability}%"></div></div>
+        <span>${p.ability}</span>
+      </div>
+      <div class="row" style="gap:6px;font-size:11px">
+        <span class="t2" style="width:60px">才能上限</span>
+        <div class="abar" style="flex:1"><div class="afill" style="background:var(--gold);opacity:.4;width:${p.talent}%"></div></div>
+        <span style="color:var(--gold)">${p.talent}</span>
+      </div>
+    </div>
+    ${(()=>{
+      const C=growthCoef(p);
+      if(C===null||p.ability>=p.talent) return '';
+      const needed=Math.max(1,Math.round(rawExpDiff(p.ability)*C));
+      const exp=p.exp||0;
+      const pct=Math.min(100,Math.round(exp/needed*100));
+      return`<div class="mt10">
+        <div class="sbL" style="margin-bottom:5px">経験値（次のLvまで）</div>
+        <div class="row" style="gap:6px;font-size:11px;align-items:center">
+          <div class="abar" style="flex:1"><div class="afill" style="background:var(--accent);width:${pct}%"></div></div>
+          <span class="t2">${exp} / ${needed}</span>
+        </div>
+      </div>`;
+    })()}
+    <div class="mt10" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${G.releasePending.includes(p.id)
+          ? `<span style="background:rgba(255,68,68,.15);color:var(--red);border:1px solid var(--red);padding:6px 12px;border-radius:4px;font-size:12px;font-weight:700">🔴 放出予定（翌週離脱）</span>
+             <button class="btn b2" onclick="releaseP(${p.id})">キャンセル</button>`
+          : `<button class="btn bD" onclick="releaseP(${p.id})">放出する</button>`
+        }
+      </div>
+      ${G.transferList.includes(p.id)?`<div class="f11 t2">📋 移籍リスト登録中（移籍市場でオファーが届きやすくなります）</div>`:''}
+      ${G.pendingTransfers.find(x=>x.pid===p.id)?`<div style="color:var(--green);font-size:12px;font-weight:700">✅ 移籍承諾済み（翌週に離脱・入金）</div>`:''}
+    </div>
+  `);
+}
+
+function releaseP(id){
+  const p=G.players.find(x=>x.id===id);
+  if(!p)return;
+  if(G.releasePending.includes(id)){
+    G.releasePending=G.releasePending.filter(x=>x!==id);
+    notify(p.name+' の放出をキャンセルしました','');
+  } else {
+    G.releasePending.push(id);
+    notify(p.name+' を放出予定に設定しました（翌週に離脱）','');
+  }
+  // モーダルを再描画して状態を反映
+  showPDetail(id);
+  // バックグラウンドのタブも更新
+  renderCurrent();
+}
+
+function showTopScorers(){
+  const s=[...G.players].sort((a,b)=>b.goals-a.goals).slice(0,10);
+  openModal(`
+    <button class="mClose" onclick="closeModal()">✕</button>
+    <div class="mTitle">今季得点ランキング</div>
+    <table>
+      <tr><th>#</th><th>選手名</th><th>Pos</th><th>ゴール</th></tr>
+      ${s.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${tagGrp(p.grp)}</td><td><b style="color:var(--gold)">${p.goals}⚽</b></td></tr>`).join('')}
+    </table>
+  `);
+}
+
+// =============================================
+// TACTICS
+// =============================================
+function renderTactics(){
+  const slots=FMTNS[G.formation];
+  const pspots=slots.map((sl,i)=>{
+    const pid=G.lineup[i];
+    const p=pid!==null?G.players.find(x=>x.id===pid):null;
+    const lv   = p ? matchLevel(p, sl.r) : null;
+    const col  = p ? matchColor(lv) : '';
+    const effAb = p ? effectiveAbility(p, sl.r) : 0;
+    // 円の背景：完全一致→能力値色、それ以外→一致レベル色
+    const circBg = p ? (lv==='exact' ? abColor(p.ability) : col) : '';
+    // 円のアウトライン：完全一致のみ緑グロー
+    const circShadow = lv==='exact' ? '0 0 0 2px var(--green)' : 'none';
+    // 矢印表示: スロット → 得意pos
+    const arrow = p
+      ? (lv==='exact'
+          ? `<span style="color:var(--green);font-size:8px;font-weight:700">${sl.r}✓</span>`
+          : lv==='grp'
+            ? `<span style="color:${col};font-size:8px;font-weight:700">${p.pos}⚠️</span>`
+            : `<span style="color:${col};font-size:8px;font-weight:700">${p.pos}❌</span>`)
+      : '';
+    return`<div class="pspot" style="left:${sl.x}%;top:${sl.y}%" onclick="openLuSelect(${i})">
+      <div class="pname" style="background:rgba(0,0,0,.45);color:#888;font-size:7px;letter-spacing:.5px">${sl.r}</div>
+      <div class="pcirc ${p?'filled':'empty'}" style="${p?`background:${circBg};color:#000;box-shadow:${circShadow}`:''}">
+        ${p?effAb:'+'}
+      </div>
+      <div class="pname">${p?p.name.split(' ')[0]:sl.r}</div>
+      ${p?`<div class="pname" style="background:rgba(0,0,0,.55)">${arrow}</div>`:''}
+    </div>`;
+  }).join('');
+  const benchHtml=G.bench.map((pid,i)=>{
+    const p=pid!==null?G.players.find(x=>x.id===pid):null;
+    return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:6px 9px;cursor:pointer;font-size:12px" onclick="openBnSelect(${i})">
+      ${p?`${tagGrp(p.grp)} <b>${p.name}</b> <span class="t2">(${p.ability})</span>`
+        :`<span class="t2">ベンチ枠 ${i+1}</span>`}
+    </div>`;
+  }).join('');
+  return`
+<div class="g2">
+<div>
+  <div class="card">
+    <div class="row between mb10">
+      <div class="cTitle" style="margin:0">フォーメーション</div>
+      <div class="row" style="gap:8px">
+        <select onchange="changeFmtn(this.value)">
+          ${Object.keys(FMTNS).map(k=>`<option value="${k}" ${k===G.formation?'selected':''}>${k}</option>`).join('')}
+        </select>
+        <button class="btn b2" onclick="autoLineup();renderCurrent()">自動</button>
+      </div>
+    </div>
+    <div class="field">${pspots}</div>
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="cTitle">チーム強度</div>
+    <div class="sb" style="padding:18px">
+      <div class="sbL">平均能力値</div>
+      <div class="sbV ca" style="font-size:44px">${teamStrength()}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="cTitle">ベンチ（8名）</div>
+    <div style="display:flex;flex-direction:column;gap:6px">${benchHtml}</div>
+  </div>
+</div>
+</div>`;
+}
+
+function changeFmtn(f){
+  G.formation=f;
+  const slots=FMTNS[f];
+  if(G.lineup.length!==slots.length) G.lineup=Array(slots.length).fill(null);
+  autoLineup();
+  renderCurrent();
+  notify('フォーメーション: '+f,'');
+}
+
+function openLuSelect(si){
+  const slots=FMTNS[G.formation];
+  const sl=slots[si];
+  const grp=roleToGrp(sl.r);
+  const currentId = G.lineup[si]; // 現在このスロットにいる選手ID
+  const usedIds=new Set(G.lineup.filter((x,i)=>x!==null&&i!==si));
+  const avail=G.players.filter(p=>!usedIds.has(p.id)).sort((a,b)=>{
+    const sa=a.grp===grp?0:1,sb=b.grp===grp?0:1;
+    return sa-sb||b.ability-a.ability;
+  });
+  openModal(`
+    <button class="mClose" onclick="closeModal()">✕</button>
+    <div class="mTitle">${sl.r} スロット選択</div>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:420px;overflow-y:auto">
+      <div style="background:var(--bg3);padding:8px 10px;border-radius:5px;cursor:pointer;color:var(--red)" onclick="setLuSlot(${si},null)">— 外す —</div>
+      ${avail.map(p=>{
+        const ph=getPhaseInfo(p);
+        const isCurrent = p.id === currentId;
+        const lv = matchLevel(p, sl.r);
+        const col = matchColor(lv);
+        const effAb = effectiveAbility(p, sl.r);
+        const hasPen = lv !== 'exact';
+        const penLabel = lv==='gk_out' ? 'GK専用(1割)' : lv==='out' ? '非本職(-20か50%減)' : '同G別P(-10か30%減)';
+        return`<div style="background:var(--bg3);padding:9px 11px;border-radius:5px;cursor:pointer;border:2px solid ${isCurrent?'var(--green)':lv==='exact'?'transparent':lv==='grp'?'rgba(255,204,0,.25)':'rgba(255,68,68,.25)'}" onclick="setLuSlot(${si},${p.id})">
+          <div class="row between">
+            <span>
+              ${isCurrent?'<span style="color:var(--green);font-size:10px;margin-right:4px">▶現在</span>':''}
+              ${tagGrp(p.grp)} <b>${p.name}</b> <span class="f11 t2">${p.pos}</span>
+              ${hasPen?`<span style="color:${col};font-size:10px;margin-left:4px">${penLabel}</span>`:''}
+            </span>
+            <span style="text-align:right">
+              <span style="color:${hasPen?col:abColor(effAb)};font-family:var(--fontH);font-size:16px;font-weight:700">${effAb}</span>
+              ${hasPen?`<span style="font-size:10px;color:var(--text2);margin-left:2px">(元${p.ability})</span>`:''}
+            </span>
+          </div>
+          <div class="row" style="gap:6px;margin-top:5px;flex-wrap:wrap">
+            <span class="f11 t2">才能 <b style="color:var(--gold)">${p.talent}</b></span>
+            <span class="f11 t2">${p.age}歳</span>
+            ${gtTag(p.gt)}
+            <span class="tag" style="background:${ph.bg};color:${ph.color}">${ph.name}</span>
+            <span class="f11" style="color:${ph.color}">残${ph.rem}年</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `);
+}
+
+function setLuSlot(i,id){
+  G.lineup[i]=id;
+  closeModal();
+  renderCurrent();
+}
+
+function openBnSelect(si){
+  const usedIds=new Set([...G.lineup.filter(x=>x!==null),...G.bench.filter((x,i)=>x!==null&&i!==si)]);
+  const avail=G.players.filter(p=>!usedIds.has(p.id)).sort((a,b)=>b.ability-a.ability);
+  openModal(`
+    <button class="mClose" onclick="closeModal()">✕</button>
+    <div class="mTitle">ベンチ枠${si+1} 選択</div>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:380px;overflow-y:auto">
+      <div style="background:var(--bg3);padding:8px 10px;border-radius:5px;cursor:pointer;color:var(--red)" onclick="setBnSlot(${si},null)">— 外す —</div>
+      ${avail.map(p=>`
+        <div style="background:var(--bg3);padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="setBnSlot(${si},${p.id})">
+          <span>${tagGrp(p.grp)} <b>${p.name}</b></span>
+          <span style="color:${abColor(p.ability)};font-family:var(--fontH);font-size:14px">${p.ability}</span>
+        </div>`).join('')}
+    </div>
+  `);
+}
+
+function setBnSlot(i,id){
+  G.bench[i]=id;
+  closeModal();
+  renderCurrent();
+}
+
+// =============================================
+// TRANSFER
+// =============================================
+let transferSort = { key: 'ability', dir: -1 };
+
+function setTransferSort(key) {
+  if (transferSort.key === key) transferSort.dir *= -1;
+  else { transferSort.key = key; transferSort.dir = 1; }
+  renderTab('transfer');
+}
+
+function tSortArrow(key) {
+  if (transferSort.key !== key) return '<span style="color:var(--border);margin-left:2px">⇅</span>';
+  return transferSort.dir === 1
+    ? '<span style="color:var(--accent);margin-left:2px">↑</span>'
+    : '<span style="color:var(--accent);margin-left:2px">↓</span>';
+}
+
+function renderTransfer(){
+  const inW=isTransferWindow();
+
+  // タブ切り替え
+  if (!window._transferTab) window._transferTab = 'offer';
+  const tab = window._transferTab;
+
+  const tabBar = `<div style="display:flex;gap:6px;margin-bottom:12px">
+    ${[['offer','📩 オファー・FA'],['scout','🔍 スカウト']].map(([k,l])=>`
+      <button class="btn ${tab===k?'bG':'b2'}" style="flex:1" onclick="window._transferTab='${k}';renderCurrent()">${l}</button>
+    `).join('')}
+  </div>`;
+
+  if (tab === 'scout') return tabBar + renderScoutTab(inW);
+  return tabBar + renderOfferTab(inW);
+}
+
+function renderScoutTab(inW) {
+  const {cost, count, abFloor} = scoutParams(G.upgrades.nego.lv);
+  const talentStar = t => t>=68?'★★★':t>=51?'★★☆':'★☆☆';
+  const talentColor = t => t>=68?'var(--gold)':t>=51?'var(--accent)':'var(--text2)';
+
+  // 送信中オファー
+  const pendingOffers = G.scoutOffers.filter(o=>o.result==='pending');
+  const recentOffers  = G.scoutOffers.filter(o=>o.result!=='pending');
+
+  return`
+${pendingOffers.length>0?`<div class="card" style="border-color:var(--accent)">
+  <div class="cTitle" style="color:var(--accent)">📨 交渉中（${pendingOffers.length}件）</div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    ${pendingOffers.map(o=>`<div style="background:var(--bg3);border-radius:5px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+      <span>${tagGrp(o.playerSnap.grp)} <b>${o.playerSnap.name}</b> <span class="t2 f11">${o.teamName}</span></span>
+      <span style="color:var(--gold)">¥${fmt(o.fee)}</span>
+    </div>`).join('')}
+  </div>
+</div>`:''}
+
+${recentOffers.length>0?`<div class="card">
+  <div class="cTitle">📋 交渉履歴</div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    ${recentOffers.slice(-5).reverse().map(o=>{
+      const icon = o.result==='accepted'?'✅':o.result==='rejected'?'❌':'💸';
+      const label = o.result==='accepted'?'獲得成功':o.result==='rejected'?'拒否':'資金不足';
+      return`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 8px;background:var(--bg3);border-radius:4px">
+        <span>${icon} <b>${o.playerSnap.name}</b> <span class="t2">${o.teamName}</span></span>
+        <span style="color:${o.result==='accepted'?'var(--green)':'var(--red)'}">${label}</span>
+      </div>`;
+    }).join('')}
+  </div>
+</div>`:''}
+
+<div class="card">
+  <div class="cTitle">🔍 スカウト検索</div>
+  <div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:10px;font-size:12px">
+    <div class="row between" style="margin-bottom:4px">
+      <span class="t2">交渉力 Lv.${G.upgrades.nego.lv} の検索条件</span>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <span>費用: <b style="color:var(--gold)">¥${fmt(cost)}</b></span>
+      <span>件数: <b style="color:var(--accent)">${count}件</b></span>
+      <span>能力帯: <b>${abFloor}以上</b></span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div>
+      <div class="f11 t2" style="margin-bottom:3px">ポジション</div>
+      <select id="scGrp" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px;font-size:12px">
+        <option value="all">全て</option>
+        <option value="GK">GK</option>
+        <option value="DF">DF</option>
+        <option value="MF">MF</option>
+        <option value="FW">FW</option>
+      </select>
+    </div>
+    <div>
+      <div class="f11 t2" style="margin-bottom:3px">成長タイプ</div>
+      <select id="scGt" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px;font-size:12px">
+        <option value="all">全て</option>
+        <option value="早熟">早熟</option>
+        <option value="普通">普通</option>
+        <option value="晩成">晩成</option>
+      </select>
+    </div>
+    <div>
+      <div class="f11 t2" style="margin-bottom:3px">年齢（下限）</div>
+      <input id="scAgeMin" type="number" value="17" min="16" max="40" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px;font-size:12px">
+    </div>
+    <div>
+      <div class="f11 t2" style="margin-bottom:3px">年齢（上限）</div>
+      <input id="scAgeMax" type="number" value="35" min="16" max="40" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px;font-size:12px">
+    </div>
+    <div>
+      <div class="f11 t2" style="margin-bottom:3px">能力値（下限）</div>
+      <input id="scAbMin" type="number" value="${abFloor}" min="1" max="88" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px;font-size:12px">
+    </div>
+  </div>
+  <button class="btn bG" style="width:100%" onclick="doScout(
+    document.getElementById('scGrp').value,
+    parseInt(document.getElementById('scAgeMin').value)||17,
+    parseInt(document.getElementById('scAgeMax').value)||35,
+    parseInt(document.getElementById('scAbMin').value)||${abFloor},
+    document.getElementById('scGt').value
+  )">🔍 スカウト実施（¥${fmt(cost)}）</button>
+</div>
+
+${G.scoutResults.length>0?`<div class="card">
+  <div class="cTitle">📋 スカウト結果（${G.scoutResults.length}件）</div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    ${G.scoutResults.map(p=>{
+      const fee=calcFee(p);
+      const alreadyOffered=G.scoutOffers.some(o=>o.pid===p.id&&o.tid===p.teamId&&o.result==='pending');
+      const inMyTeam=G.players.some(x=>x.id===p.id);
+      return`<div style="background:var(--bg3);border-radius:8px;padding:10px;border:1px solid var(--border)">
+        <div class="row between" style="margin-bottom:5px">
+          <div>
+            ${tagGrp(p.grp)} <b style="font-size:13px">${p.name}</b>
+            <span class="f11 t2" style="margin-left:6px">${p.pos} ${p.age}歳 ${gtTag(p.gt)}</span>
+          </div>
+          <span style="color:${talentColor(p.talent)};font-size:13px;font-weight:700">${talentStar(p.talent)}</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:11px;margin-bottom:6px;flex-wrap:wrap">
+          <span>能力: <b style="color:${abColor(p.ability)}">${p.ability}</b></span>
+          <span>才能: <span style="color:var(--gold)">${p.talent}</span></span>
+          <span class="t2">所属: ${p.teamName}</span>
+          <span>移籍金目安: <b style="color:var(--gold)">¥${fmt(fee)}</b></span>
+        </div>
+        ${inMyTeam?'<span style="font-size:11px;color:var(--green)">✅ すでに自チーム在籍</span>':
+          alreadyOffered?'<span style="font-size:11px;color:var(--accent)">📨 オファー送信中</span>':
+          `<button class="btn ${inW?'bS':'b2'}" style="font-size:11px;padding:4px 10px" onclick="sendScoutOffer('${p.teamId}_${p.id}')" ${!inW?'disabled title="移籍ウィンドウ外"':''}>
+            📨 オファーを出す${!inW?' (窓口外)':''}
+          </button>`}
+      </div>`;
+    }).join('')}
+  </div>
+</div>`:''}`;
+}
+
+function renderOfferTab(inW) {
+  const posOrder = ['GK','CB','LB','RB','DM','CM','AM','LM','RM','ST','LW','RW'];
+  const gtOrder  = ['早熟','普通','晩成'];
+  const phOrder  = ['成長前','成長期','安定期','衰退期','引退間近'];
+
+  const sorted=[...G.freeAgents].sort((a,b)=>{
+    let va,vb;
+    switch(transferSort.key){
+      case 'name':   return a.name.localeCompare(b.name,'ja')*transferSort.dir;
+      case 'age':    va=a.age;     vb=b.age;     break;
+      case 'ability':va=a.ability; vb=b.ability; break;
+      case 'talent': va=a.talent;  vb=b.talent;  break;
+      case 'pos':
+        va=posOrder.indexOf(a.pos); vb=posOrder.indexOf(b.pos);
+        if(va===vb){ va=-a.ability; vb=-b.ability; }
+        break;
+      case 'gt':
+        va=gtOrder.indexOf(a.gt); vb=gtOrder.indexOf(b.gt);
+        if(va===vb){ va=-a.ability; vb=-b.ability; }
+        break;
+      case 'phase':
+        va=phOrder.indexOf(getPhaseInfo(a).name); vb=phOrder.indexOf(getPhaseInfo(b).name);
+        if(va===vb){ va=-getPhaseInfo(a).rem; vb=-getPhaseInfo(b).rem; }
+        break;
+      default: va=a.ability; vb=b.ability; break;
+    }
+    return (va-vb)*transferSort.dir;
+  });
+
+  function tth(key,label){
+    return`<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="setTransferSort('${key}')">${label}${tSortArrow(key)}</th>`;
+  }
+
+  return`
+${!inW?`<div class="card" style="border-color:var(--red)">
+  <div class="cTitle" style="color:var(--red)">⛔ 移籍ウィンドウ外</div>
+  <div class="f12 t2">移籍期間：6月3週〜8月4週 / 1月1週〜2月1週</div>
+</div>`:''}
+
+${G.offers.length>0?`<div class="card" style="border-color:var(--gold)">
+  <div class="cTitle" style="color:var(--gold)">📩 移籍オファー (${G.offers.length}件)</div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    ${G.offers.map((o,i)=>{
+      const p=G.players.find(x=>x.id===o.pid);
+      if(!p)return'';
+      const isListed=G.transferList.includes(o.pid);
+      return`<div style="background:var(--bg3);border-radius:8px;padding:12px;border:1px solid rgba(255,215,0,.3)">
+        <div class="row between" style="margin-bottom:6px">
+          <div>
+            <b style="font-size:14px">${p.name}</b> ${tagGrp(p.grp)} <span class="f11 t2">${p.pos}</span>
+            ${isListed?'<span class="tag" style="background:rgba(0,204,102,.2);color:var(--green);margin-left:4px">移籍リスト</span>':''}
+          </div>
+          <div style="font-family:var(--fontH);font-size:18px;color:var(--gold)">¥${fmt(o.fee)}</div>
+        </div>
+        <div class="f11 t2" style="margin-bottom:10px">オファー元: <b>${o.team}</b>　承諾すると翌週に離脱・入金されます</div>
+        <div class="row" style="gap:8px">
+          <button class="btn bS" onclick="acceptOffer(${i})" ${!inW?'disabled title="移籍ウィンドウ外"':''}>✅ 承諾する</button>
+          <button class="btn bD" onclick="rejectOffer(${i})">❌ 拒否する</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+</div>`:''}
+
+${G.pendingTransfers.length>0?`<div class="card" style="border-color:var(--green)">
+  <div class="cTitle" style="color:var(--green)">✅ 移籍承諾済み（翌週処理）</div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    ${G.pendingTransfers.map(({pid,fee})=>{
+      const p=G.players.find(x=>x.id===pid);
+      return p?`<div style="background:var(--bg3);border-radius:5px;padding:8px 12px;display:flex;justify-content:space-between">
+        <span><b>${p.name}</b> ${tagGrp(p.grp)}</span>
+        <span style="color:var(--green)">+¥${fmt(fee)}</span>
+      </div>`:'';
+    }).join('')}
+  </div>
+</div>`:''}
+
+<div class="card">
+  <div class="row between mb10">
+    <div class="cTitle" style="margin:0">フリーエージェント市場</div>
+    <button class="btn b2" onclick="rebuildFreeAgents();renderCurrent()">🔄 更新</button>
+  </div>
+  <div class="tw">
+    <table>
+      <tr>
+        ${tth('name','名前')}
+        ${tth('age','歳')}
+        ${tth('pos','Pos')}
+        ${tth('ability','能力')}
+        ${tth('talent','才能')}
+        ${tth('gt','成長')} ${tth('phase','フェーズ／残り')}
+        <th>要求給与</th><th>成功率</th><th></th>
+      </tr>
+      ${sorted.map(p=>`<tr>
+        <td><b>${p.name}</b></td>
+        <td>${p.age}</td>
+        <td>${tagGrp(p.grp)} <span class="f11 t2">${p.pos}</span></td>
+        <td>
+          <div class="row" style="gap:4px">
+            <div class="abadge" style="background:${abColor(p.ability,.18)};color:${abColor(p.ability)}">${p.ability}</div>
+          </div>
+        </td>
+        <td style="color:var(--gold)">${p.talent}</td>
+        <td style="white-space:nowrap">${gtTag(p.gt)}</td>
+        <td style="white-space:nowrap">${phaseTagHtml(p)} ${phaseRemHtml(p)}</td>
+        <td class="f11">¥${fmt(p.salary)}/月</td>
+        <td>${Math.round(calcNegoChance(p,true)*100)}%</td>
+        <td><button class="btn bP" onclick="negoFree(${p.id})" ${!inW?'disabled':''}>交渉</button></td>
+      </tr>`).join('')}
+    </table>
+  </div>
+</div>`;
+}
+
+// スカウト費用・件数・能力下限（レベル別）
+function scoutParams(negoLv) {
+  const cost = Math.round(100000 * Math.pow(10, negoLv/20) / 50000) * 50000;
+  const count = 6 + Math.floor(negoLv * 9 / 20);
+  const abFloor = 15 + negoLv * 3;
+  return {cost, count, abFloor};
+}
+
+// スカウト実行
+function doScout(filterGrp, filterMinAge, filterMaxAge, filterMinAb, filterGt) {
+  const {cost, count, abFloor} = scoutParams(G.upgrades.nego.lv);
+  if (G.funds < cost) { notify('スカウト費用が不足しています','ng'); return; }
+  G.funds -= cost;
+  G.seasonIncome -= cost; // 支出扱い
+  refreshTop(); // 資金即時反映
+
+  // 全AIチームから候補を集める
+  let pool = [];
+  Object.entries(G.aiPlayers).forEach(([tid, squad]) => {
+    const team = G.leagueTable.find(t=>t.id===parseInt(tid));
+    const teamName = team ? team.name : '不明';
+    squad.forEach(p => {
+      if (p.ability < abFloor) return;
+      if (filterGrp && filterGrp !== 'all' && p.grp !== filterGrp) return;
+      if (p.age < filterMinAge || p.age > filterMaxAge) return;
+      if (p.ability < filterMinAb) return;
+      if (filterGt && filterGt !== 'all' && p.gt !== filterGt) return;
+      pool.push({...p, teamName, teamId: parseInt(tid)});
+    });
+  });
+
+  // シャッフルして件数分取得
+  pool.sort(()=>Math.random()-0.5);
+  G.scoutResults = pool.slice(0, count);
+  notify(`🔍 スカウト完了 ${G.scoutResults.length}件ヒット（費用 ¥${fmt(cost)}）`, 'ok');
+  renderCurrent();
+}
+
+// スカウトオファー送信
+function sendScoutOffer(playerKey) {
+  if (!isTransferWindow()) { notify('移籍ウィンドウ外はオファーを送れません','ng'); return; }
+  // playerKey = "teamId_playerId"
+  const [tid, pid] = playerKey.split('_').map(Number);
+  const squad = G.aiPlayers[tid];
+  if (!squad) return;
+  const p = squad.find(x=>x.id===pid);
+  if (!p) { notify('選手が見つかりません（すでに移籍済みかもしれません）','ng'); return; }
+
+  const fee = calcFee(p);
+  // 既にオファー送信済みか確認
+  if (G.scoutOffers.find(o=>o.pid===pid && o.tid===tid && o.result==='pending')) {
+    notify('すでにオファーを送信中です',''); return;
+  }
+  G.scoutOffers.push({pid, tid, fee, teamName: G.leagueTable.find(t=>t.id===tid)?.name||'', playerSnap:{...p}, result:'pending', sentWeek: G.week + G.month*10});
+  notify(`📨 ${p.name} にオファーを送信しました（移籍金 ¥${fmt(fee)}）`,'sp');
+  renderCurrent();
+}
+
+// スカウトオファー結果処理（週次）
+function processScoutOffers() {
+  G.scoutOffers.forEach(o => {
+    if (o.result !== 'pending') return;
+    // 送信から1週後に結果
+    const sentKey = o.sentWeek;
+    const nowKey = G.week + G.month*10;
+    if (nowKey <= sentKey) return;
+
+    // 承諾確率: 交渉力・能力差・移籍金で決まる
+    const p = o.playerSnap;
+    const base = 0.4 + G.upgrades.nego.lv * 0.025; // Lv0:40% Lv20:90%
+    const abGap = Math.max(0, p.ability - teamStrength()) * 0.008;
+    const chance = Math.max(0.1, Math.min(0.9, base - abGap));
+
+    if (Math.random() < chance) {
+      o.result = 'accepted';
+      // 資金チェック
+      if (G.funds < o.fee) {
+        notify(`💸 ${p.name} のオファーが承諾されましたが資金不足で獲得できませんでした`, 'ng');
+        o.result = 'failed_funds';
+        return;
+      }
+      G.funds -= o.fee;
+      // AIチームから除去
+      if (G.aiPlayers[o.tid]) {
+        G.aiPlayers[o.tid] = G.aiPlayers[o.tid].filter(x=>x.id!==o.pid);
+      }
+      // 自チームに追加
+      const newP = {...p, id: G.nextPlayerId++, teamId: 0, exp: p.exp||0};
+      newP.salary = calcPlayerSalary(newP);
+      G.players.push(newP);
+      notify(`✅ ${p.name} の獲得成功！移籍金 ¥${fmt(o.fee)} 支払い`, 'ok');
+    } else {
+      o.result = 'rejected';
+      notify(`❌ ${p.name} へのオファーが拒否されました`, 'ng');
+    }
+  });
+  // 完了済みオファーは7日後に履歴から削除
+  G.scoutOffers = G.scoutOffers.filter(o => o.result === 'pending' || o.result === 'accepted' || o.result === 'rejected');
+}
+
+function acceptOffer(i){
+  const o=G.offers[i];
+  const p=G.players.find(x=>x.id===o.pid);
+  if(!p)return;
+  // 承諾：翌週に移籍処理
+  G.pendingTransfers.push({pid:o.pid, fee:o.fee});
+  G.offers.splice(i,1);
+  notify(p.name+' の移籍を承諾。翌週に離脱・入金されます。','ok');
+  renderCurrent();
+}
+
+function rejectOffer(i){
+  const o=G.offers[i];
+  G.offers.splice(i,1);
+  notify('オファーを拒否しました','');
+  renderCurrent();
+}
+
+function toggleTransferList(id){
+  const p=G.players.find(x=>x.id===id);
+  if(!p)return;
+  if(G.transferList.includes(id)){
+    G.transferList=G.transferList.filter(x=>x!==id);
+    notify(p.name+' を移籍リストから除外しました','');
+  } else {
+    G.transferList.push(id);
+    notify(p.name+' を移籍リストに追加しました。移籍窓口でオファーが届くことがあります。','sp');
+  }
+  renderCurrent();
+}
+
+function negoFree(aid){
+  const p=G.freeAgents.find(x=>x.id===aid);
+  if(!p)return;
+  const ch=calcNegoChance(p,true);
+  // 交渉結果に関わらず即リストから除外
+  G.freeAgents=G.freeAgents.filter(x=>x.id!==aid);
+  if(Math.random()<ch){
+    p.id=G.nextPlayerId++;
+    p.clubId=0;
+    G.players.push(p);
+    notify('✅ '+p.name+' の獲得成功！','ok');
+  }else{
+    notify('❌ '+p.name+' との交渉決裂...','ng');
+  }
+  renderCurrent();
+}
+
+// =============================================
+// LEAGUE
+// =============================================
+function renderLeague(){
+  sortTable();
+  const upcoming=G.schedule.filter(m=>!m.played&&(m.hId===0||m.aId===0)).slice(0,5);
+
+  if (window._viewLeagueIdx === undefined) window._viewLeagueIdx = G.leagueIdx;
+  const vIdx = window._viewLeagueIdx;
+  const isMyLeague = vIdx === G.leagueIdx;
+  initAllLeagueTables();
+
+  let viewTable;
+  if (isMyLeague) {
+    viewTable = G.leagueTable.map(t => ({
+      name:t.name, isMe:t.id===0, isElite:t.isElite,
+      W:t.W, D:t.D, L:t.L, GF:t.GF, GA:t.GA, PTS:t.PTS
+    }));
+  } else {
+    viewTable = (G.allLeagueTables[vIdx]?._table || []).map(t => ({...t, isMe:false}));
+  }
+  const vn = viewTable.length;
+  const vLd = LEAGUES[vIdx];
+
+  const dropdown = `<select onchange="window._viewLeagueIdx=parseInt(this.value);renderCurrent()"
+    style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:13px;cursor:pointer">
+    ${LEAGUES.map((l,i) => {
+      const available = i >= 6 || i === G.leagueIdx;
+      return available
+        ? `<option value="${i}" ${i===vIdx?'selected':''}>${l.name}${i===G.leagueIdx?' ★':''}</option>`
+        : `<option value="${i}" disabled style="color:var(--text2)">${l.name}</option>`;
+    }).join('')}
+  </select>`;
+
+  return`
+<div class="card">
+  <div class="row between mb10" style="flex-wrap:wrap;gap:8px">
+    <div class="cTitle" style="margin:0">${vLd.name} 順位表</div>
+    ${dropdown}
+  </div>
+  <div class="tw">
+    <table>
+      <tr><th>#</th><th>チーム</th><th>試</th><th>勝</th><th>分</th><th>負</th><th>得</th><th>失</th><th>得失</th><th>勝点</th></tr>
+      ${viewTable.map((t,i)=>{
+        const promo = i === 0;
+        const rele  = i >= vn - (vLd.rele||2);
+        return`<tr class="${t.isMe?'myRow':''}">
+          <td><b>${i+1}</b>${promo?' 🔝':rele?' ⬇️':''}</td>
+          <td>${t.isMe?'⭐ ':t.isElite?'💪 ':''}<b>${t.name}</b></td>
+          <td>${t.W+t.D+t.L}</td>
+          <td>${t.W}</td><td>${t.D}</td><td>${t.L}</td>
+          <td>${t.GF}</td><td>${t.GA}</td>
+          <td>${t.GF-t.GA>=0?'+':''}${t.GF-t.GA}</td>
+          <td><b>${t.PTS}</b></td>
+        </tr>`;
+      }).join('')}
+    </table>
+  </div>
+  <div class="f11 t2 mt10">🔝 1位：昇格 ／ ⬇️ 下位：降格　💪 強豪クラブ　★ 現在所属リーグ</div>
+</div>
+
+${isMyLeague ? `<div class="card">
+  <div class="cTitle">今後の試合日程</div>
+  ${upcoming.length===0?'<div class="t2 f12">今季の試合はすべて終了しました</div>':
+  `<div style="display:flex;flex-direction:column;gap:6px">
+  ${upcoming.map(m=>{
+    const ht=getTeam(m.hId),at=getTeam(m.aId);
+    const isMy=m.hId===0||m.aId===0;
+    return`<div style="background:var(--bg3);border-radius:5px;padding:10px 13px;border:1px solid ${isMy?'var(--accent)':'var(--border)'}">
+      <div class="row" style="justify-content:space-between">
+        <span style="flex:1;text-align:right;font-weight:700;color:${m.hId===0?'var(--accent)':'var(--text)'}">${ht?ht.name:'?'}</span>
+        <span style="margin:0 12px;color:var(--text2);font-family:var(--fontH)">VS</span>
+        <span style="flex:1;font-weight:700;color:${m.aId===0?'var(--accent)':'var(--text)'}">${at?at.name:'?'}</span>
+        ${isMy?'<span class="f11" style="color:var(--accent);margin-left:8px">あなたの試合</span>':''}
+      </div>
+    </div>`;
+  }).join('')}
+  </div>`}
+</div>` : `<div class="card"><div class="f12 t2" style="text-align:center;padding:8px">★ は現在あなたが所属しているリーグです</div></div>`}`;
+}
+
+// =============================================
+// RESULTS
+// =============================================
+function renderResults(){
+  const ss=G.seasonStats;
+  const rs=G.results.slice().reverse();
+  sortTable();
+  const ld2=LEAGUES[G.leagueIdx];
+  return`
+<div class="g2">
+<div>
+<div class="card">
+  <div class="cTitle">今季成績</div>
+  <div class="g4" style="margin-bottom:0">
+    <div class="sb"><div class="sbL">勝利</div><div class="sbV cg">${ss.w}</div></div>
+    <div class="sb"><div class="sbL">引き分け</div><div class="sbV cy">${ss.d}</div></div>
+    <div class="sb"><div class="sbL">敗北</div><div class="sbV cr">${ss.l}</div></div>
+    <div class="sb"><div class="sbL">得点/失点</div><div class="sbV" style="font-size:17px">${ss.gf}/${ss.ga}</div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="cTitle">${ld2.name} 順位表</div>
+  <div class="tw"><table>
+    <tr><th>#</th><th>チーム</th><th>試</th><th>勝</th><th>分</th><th>負</th><th>得失</th><th>勝点</th></tr>
+    ${G.leagueTable.map((t,i)=>`
+      <tr class="${t.id===0?'myRow':''}">
+        <td>${i+1}</td>
+        <td>${t.id===0?'⭐ ':''}<b style="font-size:12px">${t.name}</b></td>
+        <td>${t.W+t.D+t.L}</td>
+        <td>${t.W}</td><td>${t.D}</td><td>${t.L}</td>
+        <td>${t.GF-t.GA>=0?'+':''}${t.GF-t.GA}</td>
+        <td><b>${t.PTS}</b></td>
+      </tr>`).join('')}
+  </table></div>
+</div>
+</div>
+<div>
+<div class="card">
+  <div class="cTitle">試合結果一覧</div>
+  ${rs.length===0?'<div class="t2 f12" style="text-align:center;padding:20px">まだ試合がありません</div>':
+  `<div class="tw"><table>
+    <tr><th>#</th><th>ホーム</th><th>スコア</th><th>アウェー</th><th>結果</th></tr>
+    ${rs.map((r,i)=>{
+      const res=r.res;
+      const cls=res==='win'?'rw':res==='draw'?'rd':'rl';
+      const lbl=res==='win'?'勝利':res==='draw'?'引き分け':'敗北';
+      return`<tr>
+        <td class="t2">${rs.length-i}</td>
+        <td style="${r.hId===0?'font-weight:700;color:var(--accent)':''}">${r.hName}</td>
+        <td style="font-family:var(--fontH);font-size:15px;text-align:center">${r.score[0]}-${r.score[1]}</td>
+        <td style="${r.aId===0?'font-weight:700;color:var(--accent)':''}">${r.aName}</td>
+        <td class="${cls}"><b>${lbl}</b></td>
+      </tr>`;
+    }).join('')}
+  </table></div>`}
+</div>
+</div>
+</div>`;
+}
+
+// =============================================
+// CLUB UPGRADE
+// =============================================
+const UPGDEFS={
+  nego:   {icon:'⚖️', label:'交渉力',     desc:'移籍交渉の成功率が上昇します。スカウト活動も強化。'},
+  train:  {icon:'🏋️', label:'練習設備',   desc:'試合ごとの経験値獲得量が増加します。Lv20で獲得EXP×2.0。'},
+  sponsor:{icon:'💼', label:'スポンサー', desc:'毎週のスポンサー収入が増加します。'},
+  stadium:{icon:'🏟️', label:'スタジアム', desc:'ホーム試合ごとに観客収入が入ります。J3昇格後に解放。'}
+};
+
+// スタジアムLvごとのホーム1試合収入（等比数列 Lv1=500万 → Lv20=1億）
+function calcStadiumIncome(lv){
+  if(lv<=0) return 0;
+  // 500万 × r^(lv-1)、r = (1億/500万)^(1/19) ≈ 1.178
+  const base = 5000000;
+  const r = Math.pow(100000000/5000000, 1/19);
+  return Math.round(base * Math.pow(r, lv-1));
+}
+
+function renderClub(){
+  const upgHtml=Object.entries(UPGDEFS).map(([k,d])=>{
+    const u=G.upgrades[k];
+    const maxed=u.lv>=20;
+    const locked = k==='stadium' && G.leagueIdx<7;
+    const can=!maxed && !locked && (G.funds >= u.cost);
+    const greenLit = Math.min(u.lv, 10);
+    const blueLit  = Math.max(0, u.lv - 10);
+    const pips = Array.from({length:20},(_,i)=>{
+      let cls='';
+      if(i<10 && i<greenLit) cls='on-grn';
+      if(i>=10 && (i-10)<blueLit) cls='on';
+      return`<div class="upgPip ${cls}"></div>`;
+    });
+    const pipsRow1=pips.slice(0,10).join('');
+    const pipsRow2=pips.slice(10).join('');
+
+    // スタジアム専用: 収入プレビュー
+    const stadiumExtra = k==='stadium' ? `
+      <div style="font-size:11px;margin-bottom:6px;padding:6px 8px;background:var(--bg3);border-radius:4px">
+        ${locked
+          ? `<span style="color:var(--red)">🔒 J3昇格後に解放されます</span>`
+          : `<span style="color:var(--text2)">現在のホーム収入: </span><b style="color:var(--gold)">¥${fmt(calcStadiumIncome(u.lv))}/試合</b>
+             ${u.lv<20?`<span style="color:var(--text2);margin-left:8px">→ 次: </span><b style="color:var(--green)">¥${fmt(calcStadiumIncome(u.lv+1))}/試合</b>`:''}
+             <span style="color:var(--text2);margin-left:8px">最大(Lv20): </span><b style="color:var(--accent)">¥${fmt(calcStadiumIncome(20))}/試合</b>`
+        }
+      </div>` : '';
+
+    return`<div class="upg">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">${d.icon} ${d.label}</div>
+      <div class="f12 t2" style="margin-bottom:6px">${d.desc}</div>
+      ${stadiumExtra}
+      <div style="display:flex;gap:3px;margin-bottom:2px;opacity:${locked?.4:1}">${pipsRow1}</div>
+      <div style="display:flex;gap:3px;margin-bottom:6px;opacity:${locked?.4:1}">${pipsRow2}</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Lv.${u.lv}/20${u.lv>=10?' <span style="color:var(--accent)">（上位段階）</span>':''}</div>
+      <div class="row between">
+        <span class="f12" style="color:${locked?'var(--text2)':can?'var(--gold)':maxed?'var(--green)':'var(--text2)'}">
+          ${locked?'🔒 J3以上で解放':maxed?'✅ 最大レベル':`強化費用: ¥${fmt(u.cost)}　（残高: ¥${fmt(G.funds)}）`}
+        </span>
+        <button class="btn ${can?'bG':'b2'}" onclick="doUpgrade('${k}')" ${locked?'disabled':''}>
+          ${locked?'ロック中':maxed?'MAX':can?'強化':'資金不足'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+
+  return`
+<div class="g2">
+<div>
+  <div class="card">
+    <div class="cTitle">クラブ強化</div>
+    <div style="display:flex;flex-direction:column;gap:11px">${upgHtml}</div>
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="cTitle">クラブ情報</div>
+    <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
+      ${[
+        ['クラブ名',G.clubName],
+        ['監督',G.mgrName],
+        ['所属リーグ',LEAGUES[G.leagueIdx].name],
+        ['シーズン','第'+G.season+'シーズン'],
+        ['選手数',G.players.length+'名'],
+        ['チーム強度',`<span style="color:var(--accent)">${teamStrength()}</span>`],
+      ].map(([l,v])=>`<div class="row between"><span class="t2">${l}</span><b>${v}</b></div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="cTitle">シーズン履歴</div>
+    ${G.history.length===0?'<div class="t2 f12">まだ履歴がありません</div>':
+    `<div class="tw"><table>
+      <tr><th>年度</th><th>リーグ</th><th>順位</th><th>成績</th></tr>
+      ${G.history.slice().reverse().map(h=>`<tr>
+        <td>${h.year}年 S${h.season}</td>
+        <td class="f11">${h.league}</td>
+        <td>${h.pos}位</td>
+        <td>${h.rec}</td>
+      </tr>`).join('')}
+    </table></div>`}
+  </div>
+</div>
+</div>`;
+}
+
+function doUpgrade(k){
+  const u=G.upgrades[k];
+  if(k==='stadium' && G.leagueIdx<7){
+    notify('スタジアム強化はJ3以上で解放されます','ng'); return;
+  }
+  if(u.lv>=20){ notify('すでに最大レベルです',''); return; }
+  if(G.funds<u.cost){ notify('資金が不足しています','ng'); return; }
+  G.funds-=u.cost;
+  u.lv++;
+  // スタジアムは費用の増加が急激（現実のスタジアム費用に近づける）
+  if(k==='stadium'){
+    u.cost=Math.ceil(u.cost*1.55/1000000)*1000000;
+  } else {
+    u.cost=Math.ceil(u.cost*1.4/1000)*1000;
+  }
+  notify(UPGDEFS[k].label+' をLv.'+u.lv+'に強化！','ok');
+  refreshTop();
+  renderCurrent();
+}
+
+// =============================================
+// FINANCE
+// =============================================
+function renderFinance(){
+  const wages=G.players.reduce((s,p)=>s+p.salary,0);
+  const ld=LEAGUES[G.leagueIdx];
+  let baseInc = ld.income;
+  if (G.leagueIdx === 9) {
+    const pp = G.prevJ1Pos;
+    if (pp !== null && pp <= 3)       baseInc = 100000000;
+    else if (pp !== null && pp <= 9)  baseInc = 60000000;
+    else                               baseInc = 30000000;
+  }
+  const wkInc=Math.round(baseInc*(1+G.upgrades.sponsor.lv*0.25));
+  const mInc=wkInc*4;
+  const stadLv=G.upgrades.stadium.lv;
+  const stadPerMatch=calcStadiumIncome(stadLv);
+  const ld2=LEAGUES[G.leagueIdx];
+  const homeMatches=Math.round(ld2.rounds/2); // ホーム試合数/シーズン
+  const stadSeason=G.leagueIdx>=7&&stadLv>0 ? stadPerMatch*homeMatches : 0;
+  const balance=mInc-wages;
+  function signFmt(n){ return n>=0?'+¥'+fmt(n):'-¥'+fmt(-n); }
+  return`
+<div class="g2">
+<div>
+  <div class="card">
+    <div class="cTitle">財務概要</div>
+    <div class="g2" style="margin-bottom:0">
+      <div class="sb"><div class="sbL">現在の資金</div><div class="sbV ${G.funds>=0?'cg':'cr'}">${G.funds>=0?'¥'+fmt(G.funds):'-¥'+fmt(-G.funds)}</div></div>
+      <div class="sb"><div class="sbL">今季収入合計</div><div class="sbV ca">¥${fmt(G.seasonIncome)}</div></div>
+      <div class="sb"><div class="sbL">月間給与支出</div><div class="sbV cr">-¥${fmt(wages)}</div></div>
+      <div class="sb"><div class="sbL">週間スポンサー収入</div><div class="sbV cgo">¥${fmt(wkInc)}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="cTitle">月間収支シミュレーション</div>
+    <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
+      <div class="row between" style="padding:6px 0;border-bottom:1px solid var(--border)">
+        <span class="t2">スポンサー収入/月</span>
+        <span style="color:var(--green)">+¥${fmt(mInc)}</span>
+      </div>
+      ${stadSeason>0?`<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--border)">
+        <span class="t2">🏟️ 観客収入/シーズン見込み（${homeMatches}試合×¥${fmt(stadPerMatch)}）</span>
+        <span style="color:var(--green)">+¥${fmt(stadSeason)}</span>
+      </div>`:''}
+      <div class="row between" style="padding:6px 0;border-bottom:1px solid var(--border)">
+        <span class="t2">給与支出/月</span>
+        <span style="color:var(--red)">-¥${fmt(wages)}</span>
+      </div>
+      <div class="row between" style="padding:8px 0;font-weight:700;font-size:14px">
+        <span>月間収支</span>
+        <span style="color:${balance>=0?'var(--green)':'var(--red)'}">
+          ${signFmt(balance)}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="cTitle">選手給与一覧</div>
+    <div class="tw">
+      <table>
+        <tr><th>選手名</th><th>Pos</th><th>能力</th><th>給与/月</th></tr>
+        ${[...G.players].sort((a,b)=>b.salary-a.salary).map(p=>`<tr>
+          <td>${p.name}</td>
+          <td>${tagGrp(p.grp)}</td>
+          <td>${p.ability}</td>
+          <td style="color:var(--orange)">¥${fmt(p.salary)}</td>
+        </tr>`).join('')}
+        <tr style="border-top:2px solid var(--border)">
+          <td colspan="3"><b>合計</b></td>
+          <td><b style="color:var(--red)">-¥${fmt(wages)}</b></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+</div>`;
+}
+
+// =============================================
+// MODAL
+// =============================================
+function openModal(html){
+  document.getElementById('mBox').innerHTML=html;
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal'))return;
+  document.getElementById('modal').style.display='none';
+}
+
+// =============================================
+// NOTIFICATIONS
+// =============================================
+function notify(msg,type){
+  const el=document.createElement('div');
+  el.className='notif'+(type?' '+type:'');
+  el.textContent=msg;
+  document.getElementById('nContainer').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+// =============================================
+// EVENTS
+// =============================================
+document.getElementById('btnStart').addEventListener('click',startGame);
+document.getElementById('btnNext').addEventListener('click',advanceWeek);
+document.getElementById('modal').addEventListener('click',closeModal);
+document.querySelectorAll('.nBtn').forEach(b=>{
+  b.addEventListener('click',()=>renderTab(b.dataset.tab));
+});
+
+// 都道府県セレクト初期化
+(function(){
+  const sel = document.getElementById('iPref');
+  Object.keys(PREFECTURES).forEach(pref=>{
+    const opt = document.createElement('option');
+    opt.value = pref;
+    opt.textContent = pref;
+    if(pref==='神奈川') opt.selected = true;
+    sel.appendChild(opt);
+  });
+})();
+</script>
+</body>
+</html>
