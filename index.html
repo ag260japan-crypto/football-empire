@@ -264,8 +264,8 @@ const LEAGUES = [
   {name:'都道府県1部',  teams:19, rounds:18, ha:false, baseSal:20000,   prize:0,         income:50000,     promo:1, rele:1, po:0},
   {name:'地域リーグ2部',teams:10, rounds:18, ha:true,  baseSal:60000,   prize:0,         income:75000,     promo:1, rele:1, po:0},
   {name:'地域リーグ1部',teams:10, rounds:18, ha:true,  baseSal:120000,  prize:0,         income:100000,    promo:1, rele:1, po:0},
-  {name:'JFL',          teams:15, rounds:28, ha:true,  baseSal:200000,  prize:'jfl',     income:1900000,   promo:2, rele:2, po:1},
-  {name:'J3',           teams:20, rounds:38, ha:true,  baseSal:400000,  prize:'j3',      income:7700000,   promo:2, rele:3, po:1, broadcast:20000000},
+  {name:'JFL',          teams:15, rounds:28, ha:true,  baseSal:200000,  prize:'jfl',     income:1900000,   promo:1, rele:1, po:1},
+  {name:'J3',           teams:20, rounds:38, ha:true,  baseSal:400000,  prize:'j3',      income:7700000,   promo:2, rele:2, po:1, broadcast:20000000},
   {name:'J2',           teams:20, rounds:38, ha:true,  baseSal:800000,  prize:'j2',      income:220000000, promo:2, rele:3, po:1, broadcast:100000000},
   {name:'J1',           teams:20, rounds:38, ha:true,  baseSal:2000000, prize:'j1',      income:0,         promo:0, rele:3, po:0, broadcast:250000000}
 ];
@@ -421,9 +421,7 @@ const FIXED_CLUBS = {
     '奈良 アストラ','鈴鹿 アトレヴィ','高知 マレーア','長野 ノルテ',
     '宮崎 ソレイユ','八戸 ボレアス','沖縄 ティーダ'
   ],
-  jflWaiting: [
-    '熊谷 グランデ','松山 フォルサ'
-  ],
+  jflWaiting: [],
   j3: [
     '函館 ノルディア','盛岡 ヴェルテ','いわき ルーチェ','福島 スピリッタ',
     '群馬 ヴァリア','相模原 アルデア','沼津 マレーノ','岐阜 グランツ',
@@ -543,8 +541,9 @@ function startGame() {
     scoutResults: [],   // 現在のスカウト検索結果
     scoutOffers: [],    // 送信済みスカウトオファー [{player, fee, result, week}]
     allLeagueTables: {}, // leagueIdx -> [{name, str, W,D,L,GF,GA,PTS}] 他リーグ順位表
-    allLeagues: {},      // leagueIdx -> [{name, str, isElite, waiting?}] 永続チームリスト
-    promReleLog: []      // [{season, events:[]}] 昇降格ログ（デバッグ用）
+    allLeagues: {},      // leagueIdx -> [{name, str}] 永続チームリスト
+    promReleLog: [],     // [{season, events:[]}] 昇降格ログ（デバッグ用）
+    infoLog: []          // [{week, season, msg, type}] インフォメーション履歴
   };
 
   G.players = buildInitialSquad();
@@ -718,13 +717,13 @@ function updateAllLeagueTables() {
 
   LEAGUES.forEach((ld, idx) => {
     if (idx === G.leagueIdx) return;
-    const teamList = (G.allLeagues[idx] || []).filter(t => !t.waiting);
-    if (teamList.length === 0) return;
+    const teamList = G.allLeagues[idx];
+    if (!teamList || teamList.length === 0) return;
 
     const playedPerTeam = Math.min(ld.rounds, Math.round(ld.rounds * elapsed / totalWeeks));
     const totalMatchesPlayed = Math.round(playedPerTeam * teamList.length / 2);
 
-    // 新シーズン開始時（_matchesがない）: 全試合を事前シミュレート
+    // 新シーズン開始時: 全試合を事前シミュレート
     if (!G.allLeagueTables[idx]?._matches) {
       const matches = generateAILeagueMatches(teamList, ld.rounds, ld.ha);
       const results = matches.map(([h,a]) => simAIMatch(teamList[h].str, teamList[a].str));
@@ -755,10 +754,40 @@ function updateAllLeagueTables() {
 }
 
 // 全リーグのチームリストを初期化（ゲーム開始時1回のみ）
+// J1強豪クラブ（常に強めの強度で初期化）
+const J1_TITANS = new Set([
+  '神戸 ヴァロール','横浜 マリナーズ','柏 イーグルス','浦和 レジェンズ',
+  '京都 ルーチェ','FC 東京ブルー','大阪 ガンバーズ','広島 ソーレ',
+  '川崎 フロンティア','鹿島 グローリア','名古屋 グランツ'
+]);
+
+// リーグの強度ベースを返す（idx=0:都4部〜idx=9:J1）
+function leagueBase(idx) { return 13 + idx * 7; }
+
+// 通常チームの初期str（リーグ内でbase±3のランダム）
+function randStr(idx) {
+  const b = leagueBase(idx);
+  return Math.max(10, Math.min(88, b - 3 + Math.floor(Math.random() * 7)));
+}
+// 昇格新参チームのstr（下位寄り: base-3〜base）
+function promoStr(toIdx) {
+  const b = leagueBase(toIdx);
+  return Math.max(10, Math.min(88, b - 3 + Math.floor(Math.random() * 4)));
+}
+// 降格チームのstr（上位寄り: base〜base+3）
+function releStr(toIdx) {
+  const b = leagueBase(toIdx);
+  return Math.max(10, Math.min(88, b + Math.floor(Math.random() * 4)));
+}
+// J1強豪のstr（79〜84、毎シーズン±2の調子変動）
+function titanStr(existing) {
+  const base = existing ? Math.max(79, Math.min(84, existing + Math.floor(Math.random()*5) - 2)) : 79 + Math.floor(Math.random() * 6);
+  return base;
+}
+
 function initAllLeagues() {
   LEAGUES.forEach((ld, idx) => {
     if (G.allLeagues[idx]) return;
-    const base = 12 + idx * 6;
     const fixedNames = getFixedClubNames(idx);
 
     let nameList;
@@ -768,24 +797,11 @@ function initAllLeagues() {
       nameList = generateLeagueNames(idx, ld.teams);
     }
 
-    const eliteSlots = new Set();
-    while (eliteSlots.size < Math.min(3, nameList.length - 1))
-      eliteSlots.add(Math.floor(Math.random() * nameList.length));
-
-    G.allLeagues[idx] = nameList.map((name, i) => {
-      const isElite = eliteSlots.has(i);
-      const str = Math.max(10, Math.min(88, base + Math.floor(Math.random()*16) - 5 + (isElite?8:0)));
-      return { name, str, isElite, waiting: false };
+    G.allLeagues[idx] = nameList.map(name => {
+      const isJ1Titan = idx === 9 && J1_TITANS.has(name);
+      const str = isJ1Titan ? titanStr(null) : randStr(idx);
+      return { name, str };
     });
-
-    // JFL（idx=6）: 待機枠3チームを追加（waiting:true）
-    if (idx === 6) {
-      const waitingBase = base - 4;
-      FIXED_CLUBS.jflWaiting.forEach(name => {
-        const str = Math.max(10, Math.min(88, waitingBase + Math.floor(Math.random()*10) - 3));
-        G.allLeagues[6].push({ name, str, isElite: false, waiting: true });
-      });
-    }
   });
 }
 
@@ -822,14 +838,89 @@ function getFixedClubNames(leagueIdx) {
   if (leagueIdx === 7) return [...FIXED_CLUBS.j3];
   if (leagueIdx === 8) return [...FIXED_CLUBS.j2];
   if (leagueIdx === 9) return [...FIXED_CLUBS.j1];
-  return null; // 都道府県・地域はランダム生成
+  return null;
 }
 
-function buildAISquad(teamId, leagueIdx, isElite) {
-  const base = 12 + leagueIdx * 6;
-  const eliteBonus = isElite ? 8 : 0;
-  const minAb = Math.max(8, base - 6 + eliteBonus);
-  const maxAb = Math.min(88, base + 8 + eliteBonus);
+// 他リーグの昇降格処理（シーズン末）
+// 原則: _tableの上位promo+poチームを昇格、下位releチームを降格
+// チームオブジェクトを allLeagues 間で直接移動する
+function processOtherLeaguePromRele() {
+  const season = G.season;
+  const logEvents = [];
+
+  // 昇降格を一旦「予定」としてまとめてから適用（多段干渉を防ぐ）
+  // key: leagueIdx, value: {add: [], remove: Set}
+  const changes = {};
+  LEAGUES.forEach((_, i) => { changes[i] = { add: [], remove: new Set() }; });
+
+  for (let lowerIdx = 0; lowerIdx < LEAGUES.length - 1; lowerIdx++) {
+    const upperIdx = lowerIdx + 1;
+
+    // 自チームが絡む境界はスキップ（自チームの昇降格は endSeason で処理済み）
+    if (lowerIdx === G.leagueIdx || upperIdx === G.leagueIdx) continue;
+
+    const lowerTable = G.allLeagueTables[lowerIdx]?._table;
+    const upperTable = G.allLeagueTables[upperIdx]?._table;
+    if (!lowerTable || !upperTable) continue;
+
+    const lowerLd = LEAGUES[lowerIdx];
+    const upperLd = LEAGUES[upperIdx];
+    const promoCount = lowerLd.promo + lowerLd.po; // 昇格枠（PO込み、他チームは確率的にpromo+poが全員上がると仮定）
+    const releCount  = upperLd.rele;
+
+    // _tableは既にPTS降順ソート済み → 上位=昇格、下位=降格
+    const toPromote  = lowerTable.slice(0, promoCount);
+    const toRelegate = upperTable.slice(upperTable.length - releCount);
+
+    const upperBase = 12 + upperIdx * 6;
+    const lowerBase = 12 + lowerIdx * 6;
+
+    toPromote.forEach(t => {
+      changes[lowerIdx].remove.add(t.name);
+      const orig = G.allLeagues[lowerIdx].find(a => a.name === t.name) || t;
+      changes[upperIdx].add.push({ ...orig, str: promoStr(upperIdx) });
+      logEvents.push(`⬆️ ${t.name}：${lowerLd.name} → ${LEAGUES[upperIdx].name}`);
+    });
+
+    toRelegate.forEach(t => {
+      changes[upperIdx].remove.add(t.name);
+      const orig = G.allLeagues[upperIdx].find(a => a.name === t.name) || t;
+      changes[lowerIdx].add.push({ ...orig, str: releStr(lowerIdx) });
+      logEvents.push(`⬇️ ${t.name}：${LEAGUES[upperIdx].name} → ${lowerLd.name}`);
+    });
+  }
+
+  // 変更を一括適用
+  LEAGUES.forEach((_, idx) => {
+    if (changes[idx].remove.size === 0 && changes[idx].add.length === 0) return;
+    G.allLeagues[idx] = [
+      ...G.allLeagues[idx].filter(t => !changes[idx].remove.has(t.name)),
+      ...changes[idx].add
+    ];
+  });
+
+  // チーム数検証（デバッグ用）
+  LEAGUES.forEach((ld, idx) => {
+    if (idx === G.leagueIdx) return;
+    const n = G.allLeagues[idx]?.length;
+    if (n !== ld.teams) {
+      logEvents.push(`⚠️ [DEBUG] ${ld.name} チーム数異常: ${n}チーム (期待値${ld.teams})`);
+    }
+  });
+
+  if (logEvents.length > 0) {
+    G.promReleLog.push({ season, events: logEvents });
+    logEvents.forEach(e => {
+      if (e.startsWith('⚠️')) { console.warn(e); return; }
+      notify(e, e.startsWith('⬆️') ? 'ok' : 'ng');
+    });
+  }
+}
+
+function buildAISquad(teamId, leagueIdx) {
+  const base = leagueBase(leagueIdx);
+  const minAb = Math.max(8, base - 6);
+  const maxAb = Math.min(88, base + 6);
   const specs = [{grp:'GK',cnt:2},{grp:'DF',cnt:6},{grp:'MF',cnt:5},{grp:'FW',cnt:4}];
   const squad = [];
   specs.forEach(s => {
@@ -845,51 +936,40 @@ function buildAISquad(teamId, leagueIdx, isElite) {
 function buildLeague() {
   const ld = LEAGUES[G.leagueIdx];
   const teams = [];
-  const fixedNames = getFixedClubNames(G.leagueIdx);
-  teams.push({id:0,name:G.clubName,isMe:true,W:0,D:0,L:0,GF:0,GA:0,PTS:0,str:teamStrength()});
+  teams.push({id:0, name:G.clubName, isMe:true, W:0,D:0,L:0,GF:0,GA:0,PTS:0, str:teamStrength()});
 
-  // 強豪チーム枠（3チーム）
-  const eliteSlots = new Set();
-  while(eliteSlots.size < Math.min(3, ld.teams-1)) {
-    eliteSlots.add(1 + Math.floor(Math.random()*(ld.teams-1)));
-  }
+  // allLeagues から自リーグのAIチームを読み込む（永続管理）
+  const existing = (G.allLeagues[G.leagueIdx] || []).filter(t => t.name !== G.clubName);
 
-  if (fixedNames) {
-    // JFL以上: 固定クラブ名
-    const shuffled = fixedNames.sort(()=>Math.random()-0.5);
-    for (let i=1;i<ld.teams;i++) {
-      const nm = shuffled[i-1] || shuffled[0];
-      const isElite = eliteSlots.has(i);
-      const base = 12 + G.leagueIdx*6;
-      const eliteBonus = isElite ? 8 : 0;
-      const str = Math.max(10,Math.min(88, base+Math.floor(Math.random()*16)-5+eliteBonus));
-      const tid = i;
-      teams.push({id:tid,name:nm,isMe:false,W:0,D:0,L:0,GF:0,GA:0,PTS:0,str,isElite});
-      if (!G.aiPlayers[tid]) {
-        G.aiPlayers[tid] = buildAISquad(tid, G.leagueIdx, isElite);
-      }
-    }
+  if (existing.length > 0) {
+    // 既存チームリストを使用（昇降格・str変動済み）
+    existing.forEach((t, i) => {
+      const tid = i + 1;
+      teams.push({id:tid, name:t.name, isMe:false, W:0,D:0,L:0,GF:0,GA:0,PTS:0, str:t.str});
+      if (!G.aiPlayers[tid]) G.aiPlayers[tid] = buildAISquad(tid, G.leagueIdx);
+    });
   } else {
-    // 都道府県・地域: ランダム生成
-    const cities = getCityPool();
-    const usedNames = new Set([G.clubName]);
-    let cityIdx = Math.floor(Math.random()*cities.length);
-    for (let i=1;i<ld.teams;i++) {
-      let nm, attempts=0;
-      do {
-        const city = cities[cityIdx % cities.length];
-        const prefix = PREFIXES[Math.floor(Math.random()*PREFIXES.length)];
-        nm = prefix+' '+city;
-        cityIdx++; attempts++;
-      } while (usedNames.has(nm) && attempts<50);
-      usedNames.add(nm);
-      const isElite = eliteSlots.has(i);
-      const base = 12 + G.leagueIdx*6;
-      const eliteBonus = isElite ? 8 : 0;
-      const str = Math.max(10,Math.min(88, base+Math.floor(Math.random()*16)-5+eliteBonus));
-      teams.push({id:i,name:nm,isMe:false,W:0,D:0,L:0,GF:0,GA:0,PTS:0,str,isElite});
+    // 初回のみ: allLeagues未初期化の場合はランダム生成してallLeaguesにも保存
+    const fixedNames = getFixedClubNames(G.leagueIdx);
+    let nameList;
+    if (fixedNames) {
+      nameList = [...fixedNames].filter(n => n !== G.clubName).sort(() => Math.random()-0.5);
+    } else {
+      nameList = generateLeagueNames(G.leagueIdx, ld.teams - 1);
     }
+    const aiTeams = nameList.slice(0, ld.teams - 1).map((name, i) => {
+      const isTitan = G.leagueIdx === 9 && J1_TITANS.has(name);
+      const str = isTitan ? titanStr(null) : randStr(G.leagueIdx);
+      return { name, str };
+    });
+    G.allLeagues[G.leagueIdx] = [{ name: G.clubName, str: teamStrength() }, ...aiTeams];
+    aiTeams.forEach((t, i) => {
+      const tid = i + 1;
+      teams.push({id:tid, name:t.name, isMe:false, W:0,D:0,L:0,GF:0,GA:0,PTS:0, str:t.str});
+      if (!G.aiPlayers[tid]) G.aiPlayers[tid] = buildAISquad(tid, G.leagueIdx);
+    });
   }
+
   G.leagueTable = teams;
   buildSchedule();
 }
@@ -1112,6 +1192,15 @@ function matchWeekIndex() {
   return diff;
 }
 
+// wIdxから「X月 Y週」形式の文字列を返す
+function wIdxToLabel(wIdx) {
+  const seqStart = (8-1)*4+(3-1); // Aug w3 = seq=28
+  const seq = (seqStart + wIdx) % (12*4);
+  const month = Math.floor(seq/4)+1;
+  const week  = (seq%4)+1;
+  return MONTHS[month-1]+' '+week+'週';
+}
+
 function isTransferWindow() {
   const {month,week}=G;
   if (month===6&&week>=3) return true;
@@ -1158,6 +1247,9 @@ function calcJ1BroadcastBonus(pos) {
 function endSeason() {
   // ゲームオーバーチェック（資金マイナス）
   if (G.funds < 0) {
+    // 背景クリックで閉じないよう専用フラグをセット
+    const modalEl = document.getElementById('modal');
+    modalEl.dataset.gameOver = '1';
     openModal(`
       <div style="text-align:center;padding:24px 12px">
         <div style="font-size:48px;margin-bottom:12px">💸</div>
@@ -1165,7 +1257,7 @@ function endSeason() {
         <div class="f12 t2" style="margin:12px 0 20px">
           シーズン終了時の資金がマイナスです。<br>
           クラブは経営破綻しました。<br><br>
-          <b style="color:var(--red)">最終資金: ¥${fmt(G.funds)}</b><br>
+          <b style="color:var(--red)">最終資金: ▲¥${fmt(-G.funds)}</b><br>
           ${G.season-1}シーズン / ${LEAGUES[G.leagueIdx].name}
         </div>
         <button class="btn bG" onclick="location.reload()">タイトルに戻る</button>
@@ -1226,137 +1318,6 @@ function endSeason() {
   }
 }
 
-// 他リーグ（ダミー）の昇降格処理
-function processOtherLeaguePromRele() {
-  const season = G.season;
-  const logEvents = [];
-
-  // 下位リーグから順に処理
-  for (let idx = 0; idx < LEAGUES.length - 1; idx++) {
-    const upperIdx = idx + 1;
-
-    // 自チームが絡むリーグ間はスキップ（自チームの昇降格は別途処理）
-    if (idx === G.leagueIdx || upperIdx === G.leagueIdx) continue;
-
-    const lowerLd = LEAGUES[idx];
-    const upperLd = LEAGUES[upperIdx];
-
-    // 今シーズン最終順位表（_table）を取得
-    const lowerTable = G.allLeagueTables[idx]?._table;
-    const upperTable = G.allLeagueTables[upperIdx]?._table;
-    if (!lowerTable || !upperTable) continue;
-
-    // ===== JFL（idx=6）の特殊処理 =====
-    if (upperIdx === 6) {
-      // 設計:
-      // ① JFL実戦下位2チームが地域1部へ降格
-      // ② 待機枠の古参2チームが実戦へ繰り上がり（待機枠が空になる）
-      // ③ 地域1部1位が空いた待機枠2枠のうち1枠へ入る（待機枠は常に2チーム）
-      // ④ もう1枠は翌シーズン以降に地域1位が入ってくる（今は空のまま or 前シーズン残留）
-
-      const jflAll = G.allLeagues[6];
-      const jflActive  = jflAll.filter(t => !t.waiting);
-      const jflWaiting = jflAll.filter(t => t.waiting);
-
-      // ① JFL下位2チームを降格（upperTableの順位末尾から）
-      const jflReleCount = 2;
-      const jflActiveSorted = [...jflActive].sort((a, b) => {
-        const ai = upperTable.findIndex(r => r.name === a.name);
-        const bi = upperTable.findIndex(r => r.name === b.name);
-        // 順位が後ろ（大きい）ほど先に来る
-        return (bi === -1 ? -1 : bi) - (ai === -1 ? -1 : ai);
-      });
-      const jflRelegated     = jflActiveSorted.slice(0, jflReleCount);
-      const jflRelegatedNames = new Set(jflRelegated.map(t => t.name));
-
-      // ② 待機枠全員（2チーム）を実戦へ繰り上げ
-      const promoted = jflWaiting.map(t => ({
-        ...t, waiting: false,
-        str: Math.max(10, Math.min(88, (12+6*6) + Math.floor(Math.random()*10) - 3))
-      }));
-
-      // ③ 地域1部1位を待機枠へ（lowerTableの1位）
-      const lowerActive = G.allLeagues[idx].filter(t => !t.waiting);
-      const lowerSorted = [...lowerActive].sort((a, b) => {
-        const ai = lowerTable.findIndex(r => r.name === a.name);
-        const bi = lowerTable.findIndex(r => r.name === b.name);
-        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-      });
-      const newWaiting = lowerSorted.slice(0, 1).map(t => ({
-        ...t, waiting: true,
-        str: Math.max(10, Math.min(88, (12+6*6) + Math.floor(Math.random()*10) - 5))
-      }));
-      const newWaitingNames = new Set(newWaiting.map(t => t.name));
-
-      // ④ 待機枠の残り1枠は「空」→ 翌シーズンの地域1位で埋まる
-      //    → jflWaitingSlotPending フラグは不要。次シーズンの③で自動的に埋まる
-      //    ただしこのシーズンは待機枠が1チームになる（newWaiting 1チームのみ）
-
-      // 降格チームを地域1部へ
-      const relegatedToLower = jflRelegated.map(t => ({
-        ...t, waiting: false,
-        str: Math.max(10, Math.min(88, (12+5*6) + Math.floor(Math.random()*10) - 3))
-      }));
-
-      G.allLeagues[6] = [
-        ...jflActive.filter(t => !jflRelegatedNames.has(t.name)),
-        ...promoted,
-        ...newWaiting
-      ];
-      G.allLeagues[idx] = [
-        ...lowerActive.filter(t => !newWaitingNames.has(t.name)),
-        ...relegatedToLower
-      ];
-
-      jflRelegated.forEach(t => logEvents.push(`⬇️ ${t.name}：JFL → 地域リーグ1部（降格）`));
-      promoted.forEach(t    => logEvents.push(`🔄 ${t.name}：JFL待機枠 → JFL実戦（繰り上がり）`));
-      newWaiting.forEach(t  => logEvents.push(`⬆️ ${t.name}：地域リーグ1部 → JFL待機枠`));
-      continue;
-    }
-
-    // ===== 通常の昇降格処理（地域以下 & J3/J2/J1） =====
-    const promoCount = lowerLd.promo + lowerLd.po;
-    const releCount  = upperLd.rele;
-
-    // lowerTableの順位順（昇格: 上位、降格: 下位）
-    const lowerSorted = [...G.allLeagues[idx]].filter(t=>!t.waiting).sort((a,b) => {
-      const ai = lowerTable.findIndex(r=>r.name===a.name);
-      const bi = lowerTable.findIndex(r=>r.name===b.name);
-      return (ai===-1?999:ai) - (bi===-1?999:bi);
-    });
-    const upperSorted = [...G.allLeagues[upperIdx]].filter(t=>!t.waiting).sort((a,b) => {
-      const ai = upperTable.findIndex(r=>r.name===a.name);
-      const bi = upperTable.findIndex(r=>r.name===b.name);
-      return (ai===-1?999:ai) - (bi===-1?999:bi);
-    });
-
-    const promoted  = lowerSorted.slice(0, promoCount);
-    const relegated = upperSorted.slice(upperSorted.length - releCount);
-
-    const promotedNames  = new Set(promoted.map(t=>t.name));
-    const relegatedNames = new Set(relegated.map(t=>t.name));
-
-    const upperBase = 12 + upperIdx * 6;
-    const lowerBase = 12 + idx * 6;
-
-    G.allLeagues[upperIdx] = [
-      ...G.allLeagues[upperIdx].filter(t => !relegatedNames.has(t.name)),
-      ...promoted.map(t => ({...t, waiting:false,
-        str: Math.max(10, Math.min(88, upperBase + Math.floor(Math.random()*10) - 3))}))
-    ];
-    G.allLeagues[idx] = [
-      ...G.allLeagues[idx].filter(t => !promotedNames.has(t.name)),
-      ...relegated.map(t => ({...t, waiting:false,
-        str: Math.max(10, Math.min(88, lowerBase + Math.floor(Math.random()*10) - 3))}))
-    ];
-
-    promoted.forEach(t  => logEvents.push(`⬆️ ${t.name}：${lowerLd.name} → ${LEAGUES[upperIdx].name}（昇格）`));
-    relegated.forEach(t => logEvents.push(`⬇️ ${t.name}：${LEAGUES[upperIdx].name} → ${lowerLd.name}（降格）`));
-  }
-
-  G.promReleLog.push({ season, events: logEvents });
-  logEvents.forEach(e => notify(e, e.startsWith('⬆️')?'ok':e.startsWith('🔄')?'':'ng'));
-}
 
 // プレーオフモーダル（自チームのみ）
 function openPlayoffModal(preLeagueIdx, myPos) {
@@ -1430,6 +1391,17 @@ function doEndSeasonFinalize(preLeagueIdx, myPos) {
   // _matchesだけリセット（チームリストはallLeaguesで永続管理）
   Object.keys(G.allLeagueTables).forEach(k => {
     G.allLeagueTables[k] = { _matches: false };
+  });
+  // 全リーグのstr微変動（J1強豪は調子変動幅大きめ）
+  LEAGUES.forEach((_, idx) => {
+    if (!G.allLeagues[idx]) return;
+    G.allLeagues[idx] = G.allLeagues[idx].map(t => {
+      const isTitan = idx === 9 && J1_TITANS.has(t.name);
+      const str = isTitan
+        ? titanStr(t.str)
+        : Math.max(10, Math.min(88, t.str + Math.floor(Math.random()*3) - 1));
+      return { ...t, str };
+    });
   });
   buildLeague();
   rebuildFreeAgents();
@@ -1521,7 +1493,7 @@ function replenishAITeams() {
     while (squad.length < 17) {
       const grps = ['GK','DF','DF','DF','MF','MF','FW'];
       const grp = grps[Math.floor(Math.random()*grps.length)];
-      const p = buildAISquad(t.id, G.leagueIdx, t.isElite||false);
+      const p = buildAISquad(t.id, G.leagueIdx);
       const newP = p[0];
       newP.teamId = t.id;
       squad.push(newP);
@@ -1708,21 +1680,52 @@ function updateSalaries(){
 }
 
 function autoLineup(){
-  const slots=FMTNS[G.formation];
-  const lu=Array(slots.length).fill(null);
-  const bn=Array(8).fill(null);
-  const used=new Set();
-  slots.forEach((sl,i)=>{
-    const grp=GK_ROLES.includes(sl.r)?'GK':DF_ROLES.includes(sl.r)?'DF':MF_ROLES.includes(sl.r)?'MF':'FW';
-    let best=G.players.filter(p=>p.grp===grp&&!used.has(p.id)).sort((a,b)=>b.ability-a.ability)[0];
-    if(!best) best=G.players.filter(p=>!used.has(p.id)).sort((a,b)=>b.ability-a.ability)[0];
-    if(best){lu[i]=best.id;used.add(best.id);}
+  const slots = FMTNS[G.formation];
+  const n = slots.length;
+  const avail = [...G.players].sort((a,b) => b.ability - a.ability);
+  if(avail.length === 0){ G.lineup = Array(n).fill(null); return; }
+
+  // スロットと選手のスコア行列を構築
+  // 優先度: ①pos完全一致 ②同grp ③許容grp ④それ以外
+  function score(p, r){
+    if(p.pos === r)                            return p.ability + 1000; // pos完全一致
+    const pg = GK_ROLES.includes(r)?'GK': DF_ROLES.includes(r)?'DF': MF_ROLES.includes(r)?'MF':'FW';
+    if(p.grp === 'GK' && pg !== 'GK')         return Math.round(p.ability * 0.40);
+    if(p.grp !== 'GK' && pg === 'GK')         return Math.round(p.ability * 0.40);
+    if(p.grp === pg)                           return p.ability;        // 同grp
+    // 隣接grpは軽微ペナ
+    const adj = {DF:['MF'], MF:['DF','FW'], FW:['MF']};
+    if(adj[p.grp]?.includes(pg))              return Math.round(p.ability * 0.80);
+    return Math.round(p.ability * 0.55);
+  }
+
+  // 簡易ハンガリアン: 全ペアをスコア降順→1つずつ確定（スロット・選手とも1回のみ）
+  const pairs = [];
+  slots.forEach((sl, i) => {
+    avail.forEach(p => {
+      pairs.push({ i, pid: p.id, s: score(p, sl.r) });
+    });
   });
-  let bi=0;
-  G.players.filter(p=>!used.has(p.id)).sort((a,b)=>b.ability-a.ability).forEach(p=>{
-    if(bi<8){bn[bi++]=p.id;used.add(p.id);}
+  pairs.sort((a,b) => b.s - a.s);
+
+  const lu = Array(n).fill(null);
+  const filledSlots = new Set();
+  const usedPlayers = new Set();
+
+  pairs.forEach(({ i, pid }) => {
+    if(filledSlots.has(i) || usedPlayers.has(pid)) return;
+    lu[i] = pid;
+    filledSlots.add(i);
+    usedPlayers.add(pid);
   });
-  G.lineup=lu; G.bench=bn;
+
+  // ベンチ: 残り能力順8名
+  const bn = Array(8).fill(null);
+  let bi = 0;
+  avail.filter(p => !usedPlayers.has(p.id)).forEach(p => { if(bi<8) bn[bi++] = p.id; });
+
+  G.lineup = lu;
+  G.bench = bn;
 }
 
 function getTeam(id){return G.leagueTable.find(t=>t.id===id);}
@@ -1763,7 +1766,14 @@ function refreshTop(){
   document.getElementById('tbClub').textContent=G.clubName;
   document.getElementById('tbDate').textContent=dateLabel();
   document.getElementById('tbLeague').textContent=LEAGUES[G.leagueIdx].name;
-  document.getElementById('tbMoney').textContent='¥'+fmt(G.funds);
+  const moneyEl=document.getElementById('tbMoney');
+  if(G.funds < 0){
+    moneyEl.textContent='▲¥'+fmt(-G.funds);
+    moneyEl.style.color='var(--red)';
+  } else {
+    moneyEl.textContent='¥'+fmt(G.funds);
+    moneyEl.style.color='';
+  }
   sortTable();
   const pos=G.leagueTable.findIndex(t=>t.id===0)+1;
   document.getElementById('tbRank').textContent=pos+'位/'+G.leagueTable.length+'チーム';
@@ -1773,7 +1783,7 @@ function refreshTop(){
 // TAB ROUTING
 // =============================================
 let curTab='dash';
-function renderTab(tab){
+function renderTab(tab, resetScroll=true){
   curTab=tab;
   document.querySelectorAll('.nBtn').forEach(b=>{
     b.classList.toggle('on',b.dataset.tab===tab);
@@ -1785,8 +1795,18 @@ function renderTab(tab){
     club:renderClub, finance:renderFinance
   };
   el.innerHTML=(renders[tab]||renderDash)();
+  if(resetScroll) el.scrollTop=0;
 }
-function renderCurrent(){renderTab(curTab);}
+function renderCurrent(){
+  const el=document.getElementById('content');
+  const sy=el.scrollTop;
+  renderTab(curTab, false); // スクロールリセットしない
+  // 描画後に復元（モバイル対応で二重保険）
+  requestAnimationFrame(()=>{
+    el.scrollTop=sy;
+    setTimeout(()=>{ el.scrollTop=sy; }, 16);
+  });
+}
 
 // =============================================
 // DASHBOARD
@@ -1837,22 +1857,19 @@ function renderDash(){
 <div>
   <div class="card">
     <div class="cTitle" style="display:flex;justify-content:space-between;align-items:center">
-      <span>📋 昇降格ログ</span>
-      <span class="f11 t2">${G.promReleLog.length}シーズン分</span>
+      <span>📰 インフォメーション</span>
+      <span class="f11 t2">${G.infoLog.length}件</span>
     </div>
-    ${G.promReleLog.length === 0
+    ${G.infoLog.length === 0
       ? '<div class="t2 f12" style="text-align:center;padding:12px">まだ記録がありません</div>'
-      : `<div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
-        ${[...G.promReleLog].reverse().map(log => `
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">Season ${log.season}</div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              ${log.events.map(e => `
-                <div style="font-size:11px;color:${e.startsWith('⬆️')?'var(--green)':e.startsWith('⬇️')?'var(--red)':'var(--yellow)'};padding:2px 0;border-bottom:1px solid var(--border)">${e}</div>
-              `).join('')}
-            </div>
-          </div>
-        `).join('')}
+      : `<div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">
+        ${[...G.infoLog].reverse().map(e => {
+          const col = e.type==='ok'?'var(--green)':e.type==='ng'?'var(--red)':e.type==='sp'?'var(--gold)':'var(--text2)';
+          return `<div style="display:flex;gap:6px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0">S${e.season} W${e.week}</span>
+            <span style="font-size:11px;color:${col}">${e.msg}</span>
+          </div>`;
+        }).join('')}
       </div>`
     }
   </div>
@@ -1862,8 +1879,12 @@ function renderDash(){
     ${nextM?(()=>{
       const ht=getTeam(nextM.hId),at=getTeam(nextM.aId);
       const isH=nextM.hId===0;
+      const matchDateLabel = nextM.wIdx !== undefined ? wIdxToLabel(nextM.wIdx) : '';
       return`<div style="text-align:center;padding:8px 0">
-        <div class="f12 t2" style="margin-bottom:8px">${LEAGUES[G.leagueIdx].name}</div>
+        <div style="display:flex;justify-content:center;gap:10px;align-items:center;margin-bottom:8px">
+          <span class="f12 t2">${LEAGUES[G.leagueIdx].name}</span>
+          ${matchDateLabel?`<span style="font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;color:var(--accent)">📅 ${matchDateLabel}</span>`:''}
+        </div>
         <div class="row" style="justify-content:center;gap:16px">
           <div style="font-weight:700;font-size:14px;color:${nextM.hId===0?'var(--accent)':'var(--text)'}">${ht?ht.name:'?'}</div>
           <div style="font-family:var(--fontH);font-size:18px;color:var(--text2)">VS</div>
@@ -2733,7 +2754,7 @@ function renderLeague(){
   let viewTable;
   if (isMyLeague) {
     viewTable = G.leagueTable.map(t => ({
-      name:t.name, isMe:t.id===0, isElite:t.isElite,
+      name:t.name, isMe:t.id===0,
       W:t.W, D:t.D, L:t.L, GF:t.GF, GA:t.GA, PTS:t.PTS
     }));
   } else {
@@ -2745,10 +2766,8 @@ function renderLeague(){
   const dropdown = `<select onchange="window._viewLeagueIdx=parseInt(this.value);renderCurrent()"
     style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:13px;cursor:pointer">
     ${LEAGUES.map((l,i) => {
-      const available = i >= 6 || i === G.leagueIdx;
-      return available
-        ? `<option value="${i}" ${i===vIdx?'selected':''}>${l.name}${i===G.leagueIdx?' ★':''}</option>`
-        : `<option value="${i}" disabled style="color:var(--text2)">${l.name}</option>`;
+      const star = i === G.leagueIdx ? ' ★' : '';
+      return `<option value="${i}" ${i===vIdx?'selected':''}>${l.name}${star}</option>`;
     }).join('')}
   </select>`;
 
@@ -2762,11 +2781,13 @@ function renderLeague(){
     <table>
       <tr><th>#</th><th>チーム</th><th>試</th><th>勝</th><th>分</th><th>負</th><th>得</th><th>失</th><th>得失</th><th>勝点</th></tr>
       ${viewTable.map((t,i)=>{
-        const promo = i === 0;
-        const rele  = i >= vn - (vLd.rele||2);
-        return`<tr class="${t.isMe?'myRow':''}">
-          <td><b>${i+1}</b>${promo?' 🔝':rele?' ⬇️':''}</td>
-          <td>${t.isMe?'⭐ ':t.isElite?'💪 ':''}<b>${t.name}</b></td>
+        const isPromo   = i < vLd.promo;
+        const isPO      = vLd.po > 0 && i >= vLd.promo && i < vLd.promo + vLd.po;
+        const isRele    = vLd.rele > 0 && i >= vn - vLd.rele;
+        const rowStyle  = isPromo ? 'border-left:3px solid var(--green)' : isPO ? 'border-left:3px solid var(--yellow)' : isRele ? 'border-left:3px solid var(--red)' : '';
+        return`<tr class="${t.isMe?'myRow':''}" style="${rowStyle}">
+          <td><b>${i+1}</b></td>
+          <td>${t.isMe?'⭐ ':''}<b>${t.name}</b></td>
           <td>${t.W+t.D+t.L}</td>
           <td>${t.W}</td><td>${t.D}</td><td>${t.L}</td>
           <td>${t.GF}</td><td>${t.GA}</td>
@@ -2776,7 +2797,12 @@ function renderLeague(){
       }).join('')}
     </table>
   </div>
-  <div class="f11 t2 mt10">🔝 1位：昇格 ／ ⬇️ 下位：降格　💪 強豪クラブ　★ 現在所属リーグ</div>
+  <div class="f11 t2 mt10" style="display:flex;gap:12px;flex-wrap:wrap">
+    ${vLd.promo>0?`<span style="color:var(--green)">■ 自動昇格（上位${vLd.promo}）</span>`:''}
+    ${vLd.po>0?`<span style="color:var(--yellow)">■ PLオフ（${vLd.promo+1}〜${vLd.promo+vLd.po}位）</span>`:''}
+    ${vLd.rele>0?`<span style="color:var(--red)">■ 降格（下位${vLd.rele}）</span>`:''}
+    <span>⭐ 自チーム　★ 所属リーグ</span>
+  </div>
 </div>
 
 ${isMyLeague ? `<div class="card">
@@ -2812,11 +2838,25 @@ function renderResults(){
 <div>
 <div class="card">
   <div class="cTitle">今季成績</div>
-  <div class="g4" style="margin-bottom:0">
-    <div class="sb"><div class="sbL">勝利</div><div class="sbV cg">${ss.w}</div></div>
-    <div class="sb"><div class="sbL">引き分け</div><div class="sbV cy">${ss.d}</div></div>
-    <div class="sb"><div class="sbL">敗北</div><div class="sbV cr">${ss.l}</div></div>
-    <div class="sb"><div class="sbL">得点/失点</div><div class="sbV" style="font-size:17px">${ss.gf}/${ss.ga}</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">勝 / 引 / 負</div>
+      <div style="font-family:var(--fontH);font-size:22px;letter-spacing:2px">
+        <span style="color:var(--green)">${ss.w}</span>
+        <span style="color:var(--text2);font-size:16px"> / </span>
+        <span style="color:var(--yellow)">${ss.d}</span>
+        <span style="color:var(--text2);font-size:16px"> / </span>
+        <span style="color:var(--red)">${ss.l}</span>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">得点 / 失点</div>
+      <div style="font-family:var(--fontH);font-size:22px;letter-spacing:2px">
+        <span style="color:var(--accent)">${ss.gf}</span>
+        <span style="color:var(--text2);font-size:16px"> / </span>
+        <span style="color:var(--red)">${ss.ga}</span>
+      </div>
+    </div>
   </div>
 </div>
 <div class="card">
@@ -3072,8 +3112,10 @@ function openModal(html){
   document.getElementById('modal').style.display='flex';
 }
 function closeModal(e){
-  if(e&&e.target!==document.getElementById('modal'))return;
-  document.getElementById('modal').style.display='none';
+  const modalEl=document.getElementById('modal');
+  if(modalEl.dataset.gameOver==='1') return; // ゲームオーバー中は閉じない
+  if(e&&e.target!==modalEl)return;
+  modalEl.style.display='none';
 }
 
 // =============================================
@@ -3085,6 +3127,11 @@ function notify(msg,type){
   el.textContent=msg;
   document.getElementById('nContainer').appendChild(el);
   setTimeout(()=>el.remove(),3200);
+  // インフォメーションログに記録
+  if(G && G.infoLog !== undefined){
+    G.infoLog.push({season:G.season, week:G.week, msg, type:type||''});
+    if(G.infoLog.length > 300) G.infoLog.shift(); // 最大300件
+  }
 }
 
 // =============================================
